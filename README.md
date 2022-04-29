@@ -1,0 +1,2 @@
+# wmstats
+CMS WMStats server
