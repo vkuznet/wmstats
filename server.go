@@ -1,218 +1,196 @@
 package main
 
-import (
-	"encoding/json"
-	"fmt"
-	"io"
-	"log"
-	"os"
+// server module
+//
+// Copyright (c) 2022 - Valentin Kuznetsov <vkuznet@gmail.com>
+//
 
-	// data set
-	"github.com/fatih/set"
+import (
+	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+	"time"
+
+	"github.com/dmwm/cmsauth"
+	"github.com/gorilla/mux"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	logging "github.com/vkuznet/http-logging"
 )
 
-func readData(fname string) []WMStatsRecords {
-	file, err := os.Open(fname)
-	if err != nil {
-		log.Fatal(err)
+// global variables
+var _top, _bottom, _search string
+
+// GitVersion defines git version of the server
+var GitVersion string
+
+// ServerInfo defines server info
+var ServerInfo string
+
+// StartTime represents initial time when we started the server
+var StartTime time.Time
+
+// CMSAuth structure to create CMS Auth headers
+var CMSAuth cmsauth.CMSAuth
+
+func basePath(api string) string {
+	base := Config.Base
+	if base != "" {
+		if strings.HasPrefix(api, "/") {
+			api = strings.Replace(api, "/", "", 1)
+		}
+		if strings.HasPrefix(base, "/") {
+			return fmt.Sprintf("%s/%s", base, api)
+		}
+		return fmt.Sprintf("/%s/%s", base, api)
 	}
-	defer file.Close()
-	data, err := io.ReadAll(file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var wmstats WMStatsResults
-	err = json.Unmarshal(data, &wmstats)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return wmstats.Result
+	return api
 }
 
-func server(fname string, verbose int) {
-	data := readData(fname)
-	cdict := make(map[string]CampaignStats)
-	//     adict := make(map[string]AgentStats)
-	agentSummary := make(map[string]AgentSummary)
-	cmsswSummary := make(map[string]CMSSWSummary)
-	campaignSummary := make(map[string]CampaignSummary)
-	sdict := make(map[string]SiteStats)
-	sWorkflows := make(map[string]set.Interface)
-	wmap := make(map[string]WorkflowInfo)
-	for _, info := range data {
-		for workflow, rdict := range info {
-			fmt.Println(workflow)
-			//             fmt.Printf("%+v\n", rdict)
-			cmssw := rdict.CMSSWVersion
-			workflow := rdict.RequestName
+func Handlers() *mux.Router {
+	router := mux.NewRouter()
+	router.StrictSlash(true) // to allow /route and /route/ end-points
 
-			// collect workflow information
-			wInfo := WorkflowInfo{
-				Name:     rdict.RequestName,
-				Campaign: rdict.Campaign,
-				Type:     rdict.RequestType,
-				Priority: rdict.RequestPriority,
-				Sites:    rdict.Sites,
-			}
-			// keey workflow info regardless of AgentJobInfoMap which may be missing
-			wmap[workflow] = wInfo
-			// setup initial values for cmssw summary
-			if cs, ok := cmsswSummary[cmssw]; ok {
-				cs.Requests += 1
-				cmsswSummary[cmssw] = cs
-			} else {
-				cmsswSummary[cmssw] = CMSSWSummary{Requests: 1}
-			}
+	// aux APIs used by server
+	router.HandleFunc(basePath("/healthz"), StatusHandler).Methods("GET")
+	router.HandleFunc(basePath("/metrics"), MetricsHandler).Methods("GET")
 
-			// collect site statistics from AgentJobInfo map
-			var agents []string
-			for agent, ainfo := range rdict.AgentJobInfoMap {
-				agents = append(agents, agent)
-				workflow := ainfo.Workflow
-				status := ainfo.Status
-				// update workflow info
-				if winfo, ok := wmap[workflow]; ok {
-					winfo.Status.Update(status)
-					wmap[workflow] = winfo
-				} else {
-					wInfo.Status = status
-					wmap[workflow] = wInfo
-				}
+	// main page
+	router.HandleFunc(basePath("/"), MainHandler).Methods("GET")
 
-				// update cmssw info
-				updateReleaseSummary(cmssw, cmsswSummary, status)
+	// for all requests
+	router.Use(logging.LoggingMiddleware)
+	// for all requests perform first auth/authz action
+	router.Use(authMiddleware)
 
-				// update agent info
-				updateAgentSummary(agent, agentSummary, status)
+	// use limiter middleware to slow down clients
+	router.Use(limitMiddleware)
+	return router
+}
 
-				// update campaing info
-
-				// update site info
-				for site, status := range ainfo.Sites {
-					coolOff := status.CoolOff.Sum()
-					pending := status.Submitted.Pending
-					running := status.Submitted.Running
-					failure := status.Failure.Sum()
-					success := status.Success
-					if stats, ok := sdict[site]; ok {
-						stats.CoolOff += coolOff
-						stats.Pending += pending
-						stats.Running += running
-						stats.FailJobs += failure
-						stats.SuccessJobs += success
-						sdict[site] = stats
-					} else {
-						stats := SiteStats{
-							CoolOff:     coolOff,
-							Pending:     pending,
-							Running:     running,
-							FailJobs:    failure,
-							SuccessJobs: success,
-						}
-						sdict[site] = stats
-					}
-					if workflows, ok := sWorkflows[site]; ok {
-						workflows.Add(workflow)
-						sWorkflows[site] = workflows
-					} else {
-						swSet := set.New(set.ThreadSafe)
-						swSet.Add(workflow)
-						sWorkflows[site] = swSet
-					}
-				}
-			}
-			winfo, _ := wmap[wInfo.Name]
-			winfo.Agents = agents
-			wmap[wInfo.Name] = winfo
-		}
+// Server represents main web server for service
+//gocyclo:ignore
+func Server(configFile string) {
+	StartTime = time.Now()
+	err := ParseConfig(configFile)
+	if err != nil {
+		log.Fatal(err)
 	}
-	// prepare site stats dict
-	fmt.Println("### Total site stats", len(sdict))
-	for site, stats := range sdict {
-		fmt.Println("site", site)
-		workflows, _ := sWorkflows[site]
-		stats.Requests = workflows.Size()
-		totJobs := stats.SuccessJobs + stats.FailJobs
-		if totJobs != 0 {
-			stats.FailureRate = 100 * float64(stats.FailJobs) / float64(totJobs)
-		}
-		fmt.Printf("%+v\n", stats)
+	log.SetFlags(0)
+	if Config.Verbose > 0 {
+		log.SetFlags(log.Lshortfile)
 	}
-
-	// collect campaign summary from workflow map
-	for _, winfo := range wmap {
-		campaign := winfo.Campaign
-		if cs, ok := campaignSummary[campaign]; ok {
-			cs.Requests += 1
-			cs.Status.Update(winfo.Status)
-			campaignSummary[campaign] = cs
+	log.SetOutput(new(logging.LogWriter))
+	if Config.LogFile != "" {
+		logName := Config.LogFile
+		hostname := os.Getenv("HOSTNAME")
+		if hostname == "" {
+			hostname, err = os.Hostname()
+			if err != nil {
+				hostname = "localhost"
+			}
+		}
+		if strings.HasSuffix(logName, ".log") {
+			logName = fmt.Sprintf("%s-%s.log", strings.Split(logName, ".log")[0], hostname)
 		} else {
-			summary := CampaignSummary{}
-			summary.Status.Update(winfo.Status)
-			summary.Requests = 1
-			campaignSummary[campaign] = summary
+			// it is log dir
+			logName = fmt.Sprintf("%s/%s.log", logName, hostname)
 		}
-		cdict[campaign] = CampaignStats{}
-		//         fmt.Printf("workflow: %s\n", workflow)
-		//         fmt.Printf("%+v\n", winfo)
-	}
-	fmt.Println("### Total campaign stats", len(cdict))
-	//     fmt.Println("### campaign summary")
-	//     for c, data := range campaignSummary {
-	//         log.Println(c, data)
-	//     }
-
-	// prepare campaign stats dict
-	for campaign, stats := range cdict {
-		fmt.Println("campaign", campaign)
-		if cs, ok := campaignSummary[campaign]; ok {
-			stats.JobProgress = cs.JobProgress()
-			stats.EventProgress = cs.EventProgress()
-			stats.LumiProgress = cs.LumiProgress()
-			stats.FailureRate = cs.FailureRate()
-			stats.Requests = cs.Requests
-			stats.CoolOff = cs.Status.CoolOff.Sum()
+		logName = strings.Replace(logName, "//", "/", -1)
+		//         rl, err := rotatelogs.New(Config.LogFile + "-%Y%m%d")
+		rl, err := rotatelogs.New(logName + "-%Y%m%d")
+		if err == nil {
+			rotlogs := logging.RotateLogWriter{RotateLogs: rl}
+			log.SetOutput(rotlogs)
+		} else {
+			log.Println("ERROR: unable to get rotatelogs", err)
 		}
-		fmt.Printf("%+v\n", stats)
 	}
-	fmt.Println("### agent summary", len(agentSummary))
-	for agent, data := range agentSummary {
-		fmt.Println("agent:", agent)
-		fmt.Printf("%+v\n", data)
+	if err != nil {
+		log.Printf("Unable to parse, time: %v, config: %v\n", time.Now(), configFile)
+	}
+	log.Println("Configuration:", Config.String())
+
+	// initialize cmsauth layer
+	CMSAuth.Init(Config.Hmac)
+
+	// initialize limiter
+	initLimiter(Config.LimiterPeriod)
+
+	// initialize templates
+	tmplData := make(map[string]interface{})
+	tmplData["Time"] = time.Now()
+	var templates Templates
+	_top = templates.Tmpl(Config.Templates, "top.tmpl", tmplData)
+	_bottom = templates.Tmpl(Config.Templates, "bottom.tmpl", tmplData)
+
+	// static handlers
+	for _, dir := range []string{"js", "css", "images"} {
+		m := fmt.Sprintf("%s/%s/", Config.Base, dir)
+		d := fmt.Sprintf("%s/%s", Config.StaticDir, dir)
+		http.Handle(m, http.StripPrefix(m, http.FileServer(http.Dir(d))))
 	}
 
-	fmt.Println("### cmssw summary", len(cmsswSummary))
-	for cmssw, data := range cmsswSummary {
-		fmt.Println("cmssw:", cmssw)
-		fmt.Printf("%+v\n", data)
+	// define our HTTP server
+	addr := fmt.Sprintf(":%d", Config.Port)
+	server := &http.Server{
+		Addr: addr,
 	}
-	fmt.Println("### Total number of workflows", len(wmap))
-}
 
-func updateReleaseSummary(cmssw string, cmsswSummary map[string]CMSSWSummary, status Status) {
-	if rinfo, ok := cmsswSummary[cmssw]; ok {
-		rinfo.Status.Update(status)
-		rinfo.CoolOff += rinfo.Status.CoolOff.Sum()
-		cmsswSummary[cmssw] = rinfo
-	} else {
-		rinfo := CMSSWSummary{}
-		rinfo.Status.Update(status)
-		rinfo.CoolOff += rinfo.Status.CoolOff.Job
-		cmsswSummary[cmssw] = rinfo
-	}
-}
+	// make extra channel for graceful shutdown
+	// https://medium.com/honestbee-tw-engineer/gracefully-shutdown-in-go-http-server-5f5e6b83da5a
+	httpDone := make(chan os.Signal, 1)
+	signal.Notify(httpDone, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-func updateAgentSummary(agent string, agentSummary map[string]AgentSummary, status Status) {
-	if ainfo, ok := agentSummary[agent]; ok {
-		ainfo.Requests += 1
-		ainfo.Status.Update(status)
-		ainfo.CoolOff += ainfo.Status.CoolOff.Sum()
-		agentSummary[agent] = ainfo
-	} else {
-		ainfo := AgentSummary{}
-		ainfo.Requests += 1
-		ainfo.Status.Update(status)
-		ainfo.CoolOff += ainfo.Status.CoolOff.Sum()
-		agentSummary[agent] = ainfo
+	// start necessary HTTP servers
+
+	go func() {
+		// Start either HTTPs or HTTP web server
+		_, e1 := os.Stat(Config.ServerCrt)
+		_, e2 := os.Stat(Config.ServerKey)
+		if e1 == nil && e2 == nil {
+			//start HTTPS server which require user certificates
+			rootCA := x509.NewCertPool()
+			caCert, _ := ioutil.ReadFile(Config.RootCA)
+			rootCA.AppendCertsFromPEM(caCert)
+			server = &http.Server{
+				Addr: addr,
+				TLSConfig: &tls.Config{
+					//                 ClientAuth: tls.RequestClientCert,
+					RootCAs: rootCA,
+				},
+			}
+			log.Printf("Starting HTTPs server at %v", addr)
+			err = server.ListenAndServeTLS(Config.ServerCrt, Config.ServerKey)
+		} else {
+			// Start server without user certificates
+			log.Printf("Starting HTTP server at %s", addr)
+			err = server.ListenAndServe()
+		}
+		if err != nil {
+			log.Printf("Fail to start server %v", err)
+		}
+	}()
+
+	// properly stop our HTTP and Migration Servers
+	<-httpDone
+	log.Print("HTTP server stopped")
+
+	// add extra timeout for shutdown service stuff
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() {
+		cancel()
+	}()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatalf("Server Shutdown Failed:%+v", err)
 	}
+	log.Print("HTTP server exited properly")
 }

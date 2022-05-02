@@ -1,5 +1,10 @@
 package main
 
+// main module
+//
+// Copyright (c) 2022 - Valentin Kuznetsov <vkuznet@gmail.com>
+//
+
 import (
 	"flag"
 	"fmt"
@@ -19,14 +24,12 @@ func info() string {
 func main() {
 	var version bool
 	flag.BoolVar(&version, "version", false, "Show version")
-	var input string
-	flag.StringVar(&input, "input", "", "input file")
-	var verbose int
-	flag.IntVar(&verbose, "verbose", 0, "verbosity level")
+	var config string
+	flag.StringVar(&config, "config", "", "config file")
 	flag.Parse()
 	if version {
 		fmt.Println("wmstats version:", info())
 		return
 	}
-	server(input, verbose)
+	Server(config)
 }

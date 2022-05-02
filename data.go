@@ -1,5 +1,9 @@
 package main
 
+// wmstats module
+//
+// Copyright (c) 2022 - Valentin Kuznetsov <vkuznet@gmail.com>
+//
 // Some schema of wmstatsserver which runs on
 // https://cmsweb.cern.ch/wmstatsserver/data/requestcache
 // is defined in
@@ -160,14 +164,16 @@ type WMStats struct {
 	//     Task4           Task `json:"Task4"`
 	//     Task5           Task `json:"Task5"`
 	//     Task6           Task `json:"Task6"`
-	CMSSWVersion    string
-	Campaign        string
-	RequestStatus   string          `json:"RequestStatus"`
-	RequestPriority float64         `json:"RequestPriority"`
-	RequestType     string          `json:"RequestType"`
-	RequestName     string          `json:"RequestName"`
-	Sites           []string        `json:"SiteWhiteList"`
-	AgentJobInfoMap AgentJobInfoMap `json:"AgentJobInfo"`
+	CMSSWVersion     string
+	Campaign         string
+	RequestStatus    string          `json:"RequestStatus"`
+	RequestPriority  float64         `json:"RequestPriority"`
+	RequestType      string          `json:"RequestType"`
+	RequestName      string          `json:"RequestName"`
+	TotalInputEvents int64           `json:"TotalInputEvents"`
+	TotalInputLumis  int64           `json:"TotalInputLumis"`
+	Sites            []string        `json:"SiteWhiteList"`
+	AgentJobInfoMap  AgentJobInfoMap `json:"AgentJobInfo"`
 }
 
 // WorkflowInfo provides useful map between workflow (task) name
@@ -353,4 +359,21 @@ from WMCore/src/couchapps/WMStats/_attachments/js/Views/Tables/T1/WMStats.SiteSu
                             return (result.toFixed(1)  + "%");
                           }
             }
+*/
+
+/*
+              "title": "job progress",
+var totalJobs = reqSummary.getWMBSTotalJobs() || 1;
+						var result = (reqSummary.getJobStatus("success") + reqSummary.getTotalFailure()) /
+						 totalJobs * 100;
+
+              "title": "event progress",
+var inputEvents =Number(_activePageData.getKeyValue(row.workflow, "input_events", 1)) || 1;
+                           var outputEvents = requestData.getSummary(row.workflow).getAvgEvents();
+                           var result = (outputEvents / inputEvents) * 100;
+
+              "title": "lumi progress",
+var inputLumis =Number(_activePageData.getKeyValue(row.workflow, "input_lumis", 1)) || 1;
+                           var outputLumis = requestData.getSummary(row.workflow).getAvgLumis();
+                           var result = (outputLumis / inputLumis) * 100;
 */
