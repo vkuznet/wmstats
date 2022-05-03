@@ -26,6 +26,7 @@ type Configuration struct {
 	MetricsPrefix   string   `json:"metrics_prefix"`    // metrics prefix used for prometheus
 	CMSRole         string   `json:"cms_role"`          // cms role for write access
 	CMSGroup        string   `json:"cms_group"`         // cms group for write access
+	AccessURI       string   `json:"access_uri"`        // access URI, either URL or filename
 
 	// server static parts
 	Templates string `json:"templates"` // location of server templates

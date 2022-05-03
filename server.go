@@ -138,6 +138,10 @@ func Server(configFile string) {
 		http.Handle(m, http.StripPrefix(m, http.FileServer(http.Dir(d))))
 	}
 
+	// setup WMStatsManager to handle our cache
+	wmgr := NewWMStatsManager(Config.AccessURI)
+	wmgr.update()
+
 	// define our HTTP server
 	addr := fmt.Sprintf(":%d", Config.Port)
 	server := &http.Server{

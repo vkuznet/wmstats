@@ -26,10 +26,22 @@ func main() {
 	flag.BoolVar(&version, "version", false, "Show version")
 	var config string
 	flag.StringVar(&config, "config", "", "config file")
+	var wmstatsFile string
+	flag.StringVar(&wmstatsFile, "wmstatsFile", "", "wmstats file")
 	flag.Parse()
 	if version {
 		fmt.Println("wmstats version:", info())
 		return
 	}
-	Server(config)
+	if wmstatsFile != "" {
+		wmgr := NewWMStatsManager(wmstatsFile)
+		wmgr.update()
+		cmap, smap, rmap, amap := wmstats(wmgr)
+		fmt.Println("campaign map", len(cmap))
+		fmt.Println("site map", len(smap))
+		fmt.Println("release map", len(rmap))
+		fmt.Println("agent map", len(amap))
+	} else {
+		Server(config)
+	}
 }

@@ -6,21 +6,30 @@ package main
 //
 
 import (
+	"io"
+	"log"
+	"os"
 	"time"
 )
 
 // WMStatsManager manages wmstats data
 type WMStatsManager struct {
-	URL           string // wmstats provider URL
+	URI           string // wmstats URI (URL or file name)
 	Data          []byte // wmstats data
 	TTL           int64  // time-to-live of current cache snapshot
 	RenewInterval int64  // renew interval for cache
 }
 
-// helper function to update DNSManager cache
+// helper function to update cache
 func (w *WMStatsManager) update() {
 	if w.TTL < time.Now().Unix() {
-		data, err := fetch(w.URL)
+		var data []byte
+		var err error
+		if _, err := os.Stat(w.URI); err == nil {
+			data, err = readFile(w.URI)
+		} else {
+			data, err = fetch(w.URI)
+		}
 		if err == nil {
 			w.Data = data
 		}
@@ -29,10 +38,21 @@ func (w *WMStatsManager) update() {
 }
 
 // NewWMStatsManager method properly initialize WMStatsManager
-func NewWMStatsManager(renew ...int64) *WMStatsManager {
-	wmstats := &WMStatsManager{RenewInterval: 10} // by default renew cache every 10 seconds
+func NewWMStatsManager(uri string, renew ...int64) *WMStatsManager {
+	wmstats := &WMStatsManager{URI: uri, RenewInterval: 10} // by default renew cache every 10 seconds
 	if len(renew) > 0 {
 		wmstats.RenewInterval = renew[0]
 	}
 	return wmstats
+}
+
+// helper function to read data from a file
+func readFile(fname string) ([]byte, error) {
+	file, err := os.Open(fname)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+	data, err := io.ReadAll(file)
+	return data, err
 }

@@ -8,42 +8,60 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"os"
 
 	// data set
 	"github.com/fatih/set"
 )
 
-func readData(fname string) []WMStatsRecords {
-	file, err := os.Open(fname)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	data, err := io.ReadAll(file)
-	if err != nil {
-		log.Fatal(err)
-	}
-	var wmstats WMStatsResults
-	err = json.Unmarshal(data, &wmstats)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return wmstats.Result
-}
+// func readData(fname string) []WMStatsRecords {
+//     file, err := os.Open(fname)
+//     if err != nil {
+//         log.Fatal(err)
+//     }
+//     defer file.Close()
+//     data, err := io.ReadAll(file)
+//     if err != nil {
+//         log.Fatal(err)
+//     }
+//     var wmstats WMStatsResults
+//     err = json.Unmarshal(data, &wmstats)
+//     if err != nil {
+//         log.Fatal(err)
+//     }
+//     return wmstats.Result
+// }
 
-func wmstas(fname string, verbose int) {
-	data := readData(fname)
-	cdict := make(map[string]CampaignStats)
-	//     adict := make(map[string]AgentStats)
+type SiteStatsMap map[string]SiteStats
+type CampaignStatsMap map[string]CampaignStats
+type AgentStatsMap map[string]AgentStats
+type CMSSWStatsMap map[string]CMSSWStats
+
+func wmstats(wmgr *WMStatsManager) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMap, AgentStatsMap) {
+	// update our cache
+	wmgr.update()
+	var wmstats WMStatsResults
+	err := json.Unmarshal(wmgr.Data, &wmstats)
+	if err != nil {
+		log.Fatal(err)
+	}
+	data := wmstats.Result
+
+	//     data := readData(fname)
+	// create our stats maps
+	cmap := make(CampaignStatsMap)
+	smap := make(SiteStatsMap)
+	amap := make(AgentStatsMap)
+	rmap := make(CMSSWStatsMap)
+
+	// create aux maps
 	agentSummary := make(map[string]AgentSummary)
 	cmsswSummary := make(map[string]CMSSWSummary)
 	campaignSummary := make(map[string]CampaignSummary)
-	sdict := make(map[string]SiteStats)
 	sWorkflows := make(map[string]set.Interface)
 	wmap := make(map[string]WorkflowInfo)
+
+	// main loop
 	for _, info := range data {
 		for workflow, rdict := range info {
 			fmt.Println(workflow)
@@ -101,13 +119,13 @@ func wmstas(fname string, verbose int) {
 					running := status.Submitted.Running
 					failure := status.Failure.Sum()
 					success := status.Success
-					if stats, ok := sdict[site]; ok {
+					if stats, ok := smap[site]; ok {
 						stats.CoolOff += coolOff
 						stats.Pending += pending
 						stats.Running += running
 						stats.FailJobs += failure
 						stats.SuccessJobs += success
-						sdict[site] = stats
+						smap[site] = stats
 					} else {
 						stats := SiteStats{
 							CoolOff:     coolOff,
@@ -116,7 +134,7 @@ func wmstas(fname string, verbose int) {
 							FailJobs:    failure,
 							SuccessJobs: success,
 						}
-						sdict[site] = stats
+						smap[site] = stats
 					}
 					if workflows, ok := sWorkflows[site]; ok {
 						workflows.Add(workflow)
@@ -134,8 +152,8 @@ func wmstas(fname string, verbose int) {
 		}
 	}
 	// prepare site stats dict
-	fmt.Println("### Total site stats", len(sdict))
-	for site, stats := range sdict {
+	fmt.Println("### Total site stats", len(smap))
+	for site, stats := range smap {
 		fmt.Println("site", site)
 		workflows, _ := sWorkflows[site]
 		stats.Requests = workflows.Size()
@@ -159,18 +177,18 @@ func wmstas(fname string, verbose int) {
 			summary.Requests = 1
 			campaignSummary[campaign] = summary
 		}
-		cdict[campaign] = CampaignStats{}
+		cmap[campaign] = CampaignStats{}
 		//         fmt.Printf("workflow: %s\n", workflow)
 		//         fmt.Printf("%+v\n", winfo)
 	}
-	fmt.Println("### Total campaign stats", len(cdict))
+	fmt.Println("### Total campaign stats", len(cmap))
 	//     fmt.Println("### campaign summary")
 	//     for c, data := range campaignSummary {
 	//         log.Println(c, data)
 	//     }
 
 	// prepare campaign stats dict
-	for campaign, stats := range cdict {
+	for campaign, stats := range cmap {
 		fmt.Println("campaign", campaign)
 		if cs, ok := campaignSummary[campaign]; ok {
 			stats.JobProgress = cs.JobProgress()
@@ -194,6 +212,7 @@ func wmstas(fname string, verbose int) {
 		fmt.Printf("%+v\n", data)
 	}
 	fmt.Println("### Total number of workflows", len(wmap))
+	return cmap, smap, rmap, amap
 }
 
 func updateReleaseSummary(cmssw string, cmsswSummary map[string]CMSSWSummary, status Status) {
