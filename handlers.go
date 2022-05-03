@@ -88,11 +88,53 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl["Menu"] = template.HTML(tmplPage("menu.tmpl", tmpl))
 	tmpl["Search"] = template.HTML(tmplPage("search.tmpl", tmpl))
 	tmpl["Filter"] = template.HTML(tmplPage("filters.tmpl", tmpl))
-	tmpl["Header"] = template.HTML(tmplPage("header.tmpl", tmpl))
-	tmpl["Footer"] = template.HTML(tmplPage("footer.tmpl", tmpl))
+	tmpl["Header"] = _header
+	tmpl["Footer"] = _footer
 
 	page := tmplPage("main.tmpl", tmpl)
-	w.Write([]byte(page))
+	w.Write([]byte(string(_top) + page + string(_bottom)))
+}
+
+// AlertsHandler provides access to alerts page of server
+func AlertsHandler(w http.ResponseWriter, r *http.Request) {
+	// create temaplate
+	tmpl := make(TmplRecord)
+	tmpl["Base"] = Config.Base
+	tmpl["ServerInfo"] = ServerInfo
+	tmpl["Menu"] = template.HTML(tmplPage("menu.tmpl", tmpl))
+	tmpl["Header"] = _header
+	tmpl["Footer"] = _footer
+
+	page := tmplPage("alerts.tmpl", tmpl)
+	w.Write([]byte(string(_top) + page + string(_bottom)))
+}
+
+// AgentsHandler provides access to agents page of server
+func AgentsHandler(w http.ResponseWriter, r *http.Request) {
+	// create temaplate
+	tmpl := make(TmplRecord)
+	tmpl["Base"] = Config.Base
+	tmpl["ServerInfo"] = ServerInfo
+	tmpl["Menu"] = template.HTML(tmplPage("menu.tmpl", tmpl))
+	tmpl["Header"] = _header
+	tmpl["Footer"] = _footer
+
+	page := tmplPage("agents.tmpl", tmpl)
+	w.Write([]byte(string(_top) + page + string(_bottom)))
+}
+
+// ErrorLogsHandler provides access to error logs page of server
+func ErrorLogsHandler(w http.ResponseWriter, r *http.Request) {
+	// create temaplate
+	tmpl := make(TmplRecord)
+	tmpl["Base"] = Config.Base
+	tmpl["ServerInfo"] = ServerInfo
+	tmpl["Menu"] = template.HTML(tmplPage("menu.tmpl", tmpl))
+	tmpl["Header"] = _header
+	tmpl["Footer"] = _footer
+
+	page := tmplPage("errorlogs.tmpl", tmpl)
+	w.Write([]byte(string(_top) + page + string(_bottom)))
 }
 
 // StatusHandler provides basic functionality of status response

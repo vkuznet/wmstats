@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -26,7 +27,7 @@ import (
 )
 
 // global variables
-// var _top, _bottom, _search string
+var _top, _bottom, _header, _footer template.HTML
 
 // GitVersion defines git version of the server
 var GitVersion string
@@ -67,6 +68,9 @@ func Handlers() *mux.Router {
 	router.HandleFunc(basePath("/metrics"), MetricsHandler).Methods("GET")
 
 	// main page
+	router.HandleFunc(basePath("/alerts"), AlertsHandler).Methods("GET")
+	router.HandleFunc(basePath("/agents"), AgentsHandler).Methods("GET")
+	router.HandleFunc(basePath("/errorlogs"), ErrorLogsHandler).Methods("GET")
 	router.HandleFunc(basePath("/"), MainHandler).Methods("GET")
 
 	// for all requests
@@ -129,11 +133,14 @@ func Server(configFile string) {
 	initLimiter(Config.LimiterPeriod)
 
 	// initialize templates
-	//     tmplData := make(map[string]interface{})
-	//     tmplData["Time"] = time.Now()
-	//     var templates Templates
-	//     _top = templates.Tmpl(Config.Templates, "top.tmpl", tmplData)
-	//     _bottom = templates.Tmpl(Config.Templates, "bottom.tmpl", tmplData)
+	tmpl := make(TmplRecord)
+	tmpl["Base"] = Config.Base
+	tmpl["ServerInfo"] = ServerInfo
+	tmpl["Time"] = time.Now()
+	_top = template.HTML(tmplPage("top.tmpl", tmpl))
+	_bottom = template.HTML(tmplPage("bottom.tmpl", tmpl))
+	_header = template.HTML(tmplPage("header.tmpl", tmpl))
+	_footer = template.HTML(tmplPage("footer.tmpl", tmpl))
 
 	// static handlers
 	for _, dir := range []string{"js", "css", "images"} {
