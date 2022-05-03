@@ -7,56 +7,39 @@
     <link rel="icon" type="image/jpg" href="{{.Base}}/images/cms_logo.jpg" />
     <link rel="stylesheet" href="{{.Base}}/css/main.css" />
     <link rel="stylesheet" type="text/css" href="{{.Base}}/css/kube.min.css"/>
+    <link rel="stylesheet" type="text/css" href="{{.Base}}/css/kube-addons.min.css"/>
     <link rel="stylesheet" href="{{.Base}}/css/main-page.css" />
+    <script type="text/javascript" src="{{.Base}}/js/kube.min.js"></script>
+    <script type="text/javascript" src="{{.Base}}/js/kube-addons.min.js"></script>
     <script type="text/javascript" src="{{.Base}}/js/utils.js"></script>
+    <script>$K.dom(window).on('load', $K.init);</script>
 </head>
 <body>
 
 
 		<div class="page">
-			<header class="header">CMS header</header>
+            <header class="header">
+                {{.Header}}
+            </header>
 			<main class="main is-container">
 				<div class="main-sidebar">
-                    <div>
-                    Requests:
-                    <ul>
-                        <li>
-                        <button class="button is-tertiary is-small">
-                            <a href="{{.Base}}?stats=campaign">Campaign</a>
-                        </button>
-                        </li>
-                        <li>
-                        <button class="button is-tertiary is-small">
-                            <a href="{{.Base}}?stats=site">Site</a>
-                        </button>
-                        </li>
-                        <li>
-                        <button class="button is-tertiary is-small">
-                            <a href="{{.Base}}?stats=cmssw">CMSSW</a>
-                        </button>
-                        </li>
-                        <li>
-                        <button class="button is-tertiary is-small">
-                            <a href="{{.Base}}?stats=agent">Agent</a>
-                        </button>
-                        </li>
-                    </ul>
-                    </div>
-                    <div>
-                    <button class="button is-tertiary is-small">Alerts</button>
-                    </div>
-                    <div>
-                    <button class="button is-tertiary is-small">Agents</button>
-                    </div>
-                    <div>
-                    <button class="button is-tertiary is-small">ErrorLogs</button>
-                    </div>
+                    {{.Menu}}
                 </div>
 				<div class="main-content">
+                    <div class="is-row">
+                        <div class="is-col is-80">
+                        {{.Search}}
+                        </div>
+                        <div class="is-col is-20">
+                        {{.Filter}}
+                        </div>
+                    </div>
                     {{.Table}}
                 </div>
 			</main>
-			<footer class="footer">CMS footer</footer>
+			<footer class="footer">
+                {{.Footer}}
+            </footer>
 		</div>
 
 </body>
