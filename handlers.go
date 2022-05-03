@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"html/template"
 	"log"
 	"net/http"
 )
@@ -52,9 +53,31 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request) {
 
 // MainHandler provides access to main page of server
 func MainHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	stats := query.Get("stats")
+
+	// get data
+	wMgr.update()
+	cmap, smap, rmap, amap := wmstats(wMgr)
+	var table string
+	if stats == "agent" {
+		table = amap.HTMLTable()
+	} else if stats == "site" {
+		table = smap.HTMLTable()
+	} else if stats == "cmssw" {
+		table = rmap.HTMLTable()
+	} else if stats == "campaign" {
+		table = cmap.HTMLTable()
+	} else {
+		table = cmap.HTMLTable()
+	}
+
+	// create temaplate
 	tmpl := make(TmplRecord)
 	tmpl["Base"] = Config.Base
 	tmpl["ServerInfo"] = ServerInfo
+	tmpl["Table"] = template.HTML(table)
+
 	page := tmplPage("main.tmpl", tmpl)
 	w.Write([]byte(page))
 }

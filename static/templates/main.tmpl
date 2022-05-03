@@ -1,35 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>DBS server</title>
+    <title>WMStats server</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/jpg" href="{{.Base}}/images/cms_logo.jpg" />
     <link rel="stylesheet" href="{{.Base}}/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="{{.Base}}/css/kube.min.css"/>
+    <link rel="stylesheet" href="{{.Base}}/css/main-page.css" />
 </head>
 <body>
-    <h2>DBS Server</h2>
-    {{.ServerInfo}}
-    <br/>
-    <h2>DBS documentation</h2>
-    <div class="list">
-    <ul>
-        <li><a href="https://github.com/dmwm/dbs2go/blob/master/docs/DBSServer.md">Server architecture</a></li>
-        <li><a href="https://monit-grafana.cern.ch/d/kJOvR2h7k/dbs2go?orgId=11">Server dashboard</a></li>
-        <li><a href="https://github.com/dmwm/dbs2go/blob/master/docs/Client.md">HTTP client</a></li>
-        <li><a href="https://github.com/dmwm/DBSClient">Python client</a></li>
-        <li><a href="https://cms-http-group.web.cern.ch/cms-http-group/apidoc/dbs3-client/current/dbs.apis.html">Python client documentation</a></li>
-        <li><a href="https://pypi.org/project/dbs3-client/">Python client on PyPi</a></li>
-        <li><a href="https://github.com/dmwm/dbs2go/blob/master/docs/apis.md">APIs</a></li>
-        <li><a href="https://github.com/dmwm/dbs2go/blob/master/docs/DBSServer.md#dbs-errors">Errors and error codes</a></li>
-    </ul>
-    </div>
-    <hr/>
-    <div class="center">
-        <a href="https://github.com/dmwm/dbs2go" title="GitHub"><img src="https://www.freeiconspng.com/uploads/github-logo-icon-0.png" width="30" alt="Github" /></a>
-        &nbsp;&nbsp;&nbsp;
-        <a href="https://github.com/dmwm/dbs2go/issues" title="Issue"><img src="https://www.freeiconspng.com/uploads/error-exclamation-problem-warning-icon-32.png" width="30" alt="Issue" /></a>
-        &nbsp;&nbsp;&nbsp;
-        <a href="https://cms-talk.web.cern.ch/c/offcompannounce/dmwmdev/153" title="ContactUs"><img src="https://www.freeiconspng.com/uploads/discussion-forum-icon-6.png" width="30" alt="Contact" /></a>
-    </div>
+
+
+		<div class="page">
+			<header class="header">CMS header</header>
+			<main class="main is-container">
+				<div class="main-sidebar">
+                    <div>
+                    Requests:
+                    <ul>
+                        <li>
+                        <button class="button is-tertiary is-small">
+                            <a href="{{.Base}}?stats=campaign">Campaign</a>
+                        </button>
+                        </li>
+                        <li>
+                        <button class="button is-tertiary is-small">
+                            <a href="{{.Base}}?stats=site">Site</a>
+                        </button>
+                        </li>
+                        <li>
+                        <button class="button is-tertiary is-small">
+                            <a href="{{.Base}}?stats=cmssw">CMSSW</a>
+                        </button>
+                        </li>
+                        <li>
+                        <button class="button is-tertiary is-small">
+                            <a href="{{.Base}}?stats=agent">Agent</a>
+                        </button>
+                        </li>
+                    </ul>
+                    </div>
+                    <div>
+                    <button class="button is-tertiary is-small">Alerts</button>
+                    </div>
+                    <div>
+                    <button class="button is-tertiary is-small">Agents</button>
+                    </div>
+                    <div>
+                    <button class="button is-tertiary is-small">ErrorLogs</button>
+                    </div>
+                </div>
+				<div class="main-content">
+                    {{.Table}}
+                </div>
+			</main>
+			<footer class="footer">CMS footer</footer>
+		</div>
+
 </body>
 </html>

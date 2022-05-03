@@ -67,6 +67,9 @@ func ParseConfig(configFile string) error {
 		log.Println("unable to parse config file", configFile, err)
 		return err
 	}
+	if Config.LimiterPeriod == "" {
+		Config.LimiterPeriod = "100-S"
+	}
 	if Config.Templates == "" {
 		Config.Templates = fmt.Sprintf("%s/templates", Config.StaticDir)
 	}

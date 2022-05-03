@@ -1,0 +1,15 @@
+// master.scss
+@import "scss/vars.scss";
+@import "scss/mixings.scss";
+
+.main-sidebar {
+    @include make-sidebar(240px);
+    margin-right: 16px;
+
+    @include for-mobile {
+        margin-right: 0;
+    }
+}
+.main-content {
+    @include make-content;
+}

@@ -158,12 +158,6 @@ type AgentJobInfoMap map[string]AgentJobInfo
 
 // WMStats represents wmstats data-structure we parse
 type WMStats struct {
-	//     Task1           Task `json:"Task1"`
-	//     Task2           Task `json:"Task2"`
-	//     Task3           Task `json:"Task3"`
-	//     Task4           Task `json:"Task4"`
-	//     Task5           Task `json:"Task5"`
-	//     Task6           Task `json:"Task6"`
 	CMSSWVersion     string
 	Campaign         string
 	RequestStatus    string          `json:"RequestStatus"`

@@ -26,7 +26,7 @@ import (
 )
 
 // global variables
-var _top, _bottom, _search string
+// var _top, _bottom, _search string
 
 // GitVersion defines git version of the server
 var GitVersion string
@@ -40,6 +40,9 @@ var StartTime time.Time
 // CMSAuth structure to create CMS Auth headers
 var CMSAuth cmsauth.CMSAuth
 
+var wMgr *WMStatsManager
+
+// helper function to provide base path of URL
 func basePath(api string) string {
 	base := Config.Base
 	if base != "" {
@@ -54,6 +57,7 @@ func basePath(api string) string {
 	return api
 }
 
+// Handlers defines all server handlers
 func Handlers() *mux.Router {
 	router := mux.NewRouter()
 	router.StrictSlash(true) // to allow /route and /route/ end-points
@@ -125,11 +129,11 @@ func Server(configFile string) {
 	initLimiter(Config.LimiterPeriod)
 
 	// initialize templates
-	tmplData := make(map[string]interface{})
-	tmplData["Time"] = time.Now()
-	var templates Templates
-	_top = templates.Tmpl(Config.Templates, "top.tmpl", tmplData)
-	_bottom = templates.Tmpl(Config.Templates, "bottom.tmpl", tmplData)
+	//     tmplData := make(map[string]interface{})
+	//     tmplData["Time"] = time.Now()
+	//     var templates Templates
+	//     _top = templates.Tmpl(Config.Templates, "top.tmpl", tmplData)
+	//     _bottom = templates.Tmpl(Config.Templates, "bottom.tmpl", tmplData)
 
 	// static handlers
 	for _, dir := range []string{"js", "css", "images"} {
@@ -139,10 +143,10 @@ func Server(configFile string) {
 	}
 
 	// setup WMStatsManager to handle our cache
-	wmgr := NewWMStatsManager(Config.AccessURI)
-	wmgr.update()
+	wMgr = NewWMStatsManager(Config.AccessURI)
 
 	// define our HTTP server
+	http.Handle("/", Handlers())
 	addr := fmt.Sprintf(":%d", Config.Port)
 	server := &http.Server{
 		Addr: addr,

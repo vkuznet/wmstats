@@ -14,28 +14,82 @@ import (
 	"github.com/fatih/set"
 )
 
-// func readData(fname string) []WMStatsRecords {
-//     file, err := os.Open(fname)
-//     if err != nil {
-//         log.Fatal(err)
-//     }
-//     defer file.Close()
-//     data, err := io.ReadAll(file)
-//     if err != nil {
-//         log.Fatal(err)
-//     }
-//     var wmstats WMStatsResults
-//     err = json.Unmarshal(data, &wmstats)
-//     if err != nil {
-//         log.Fatal(err)
-//     }
-//     return wmstats.Result
-// }
+// WMStatsMap defines interface to represent different WMStats maps
+type WMStatsMap interface {
+	HTMLTable() string // create proper html table for our map
+}
 
+// SiteStatsMap
 type SiteStatsMap map[string]SiteStats
+
+// HTMLTable implements WMStatsMap interface
+func (wmap SiteStatsMap) HTMLTable() string {
+	t := "<table><tr>\n"
+	t += "<th>Site</th>"
+	t += "<th>Requests</th>"
+	t += "<th>Pending</th>"
+	t += "<th>Running</th>"
+	t += "<th>CoolOff</th>"
+	t += "<th>Failure Rate</th>"
+	t += "</tr>\n"
+	for key, data := range wmap {
+		t += "<tr>"
+		t += fmt.Sprintf("<td>%v</td>", key)
+		t += fmt.Sprintf("<td>%v</td>", data.Requests)
+		t += fmt.Sprintf("<td>%v</td>", data.Pending)
+		t += fmt.Sprintf("<td>%v</td>", data.Running)
+		t += fmt.Sprintf("<td>%v</td>", data.CoolOff)
+		t += fmt.Sprintf("<td>%v</td>", data.FailureRate)
+		t += "</tr>\n"
+	}
+	t += "</table>"
+	return t
+}
+
+// CampaignStatsMap
 type CampaignStatsMap map[string]CampaignStats
+
+// HTMLTable implements WMStatsMap interface
+func (wmap CampaignStatsMap) HTMLTable() string {
+	t := "<table><tr>\n"
+	t += "<th>Campaign</th>"
+	t += "<th>Requests</th>"
+	t += "<th>Job Progress</th>"
+	t += "<th>Event Progress</th>"
+	t += "<th>Lumi Progress</th>"
+	t += "<th>Failure Rate</th>"
+	t += "<th>CoolOff</th>"
+	t += "</tr>\n"
+	for key, data := range wmap {
+		t += "<tr>"
+		t += fmt.Sprintf("<td>%v</td>", key)
+		t += fmt.Sprintf("<td>%v</td>", data.Requests)
+		t += fmt.Sprintf("<td>%v</td>", data.JobProgress)
+		t += fmt.Sprintf("<td>%v</td>", data.EventProgress)
+		t += fmt.Sprintf("<td>%v</td>", data.LumiProgress)
+		t += fmt.Sprintf("<td>%v</td>", data.FailureRate)
+		t += fmt.Sprintf("<td>%v</td>", data.CoolOff)
+		t += "</tr>\n"
+	}
+	t += "</table>"
+	return t
+}
+
+// AgentStatsMap
 type AgentStatsMap map[string]AgentStats
+
+// HTMLTable implements WMStatsMap interface
+func (wmap AgentStatsMap) HTMLTable() string {
+	return ""
+}
+
+// CMSSWStatsMap
 type CMSSWStatsMap map[string]CMSSWStats
+
+// HTMLTable implements WMStatsMap interface
+func (wmap CMSSWStatsMap) HTMLTable() string {
+	return ""
+}
 
 func wmstats(wmgr *WMStatsManager) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMap, AgentStatsMap) {
 	// update our cache
@@ -197,6 +251,7 @@ func wmstats(wmgr *WMStatsManager) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMa
 			stats.FailureRate = cs.FailureRate()
 			stats.Requests = cs.Requests
 			stats.CoolOff = cs.Status.CoolOff.Sum()
+			cmap[campaign] = stats
 		}
 		fmt.Printf("%+v\n", stats)
 	}

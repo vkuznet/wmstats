@@ -39,7 +39,7 @@ func (w *WMStatsManager) update() {
 
 // NewWMStatsManager method properly initialize WMStatsManager
 func NewWMStatsManager(uri string, renew ...int64) *WMStatsManager {
-	wmstats := &WMStatsManager{URI: uri, RenewInterval: 10} // by default renew cache every 10 seconds
+	wmstats := &WMStatsManager{URI: uri, RenewInterval: 300} // by default renew cache every 5 minutes
 	if len(renew) > 0 {
 		wmstats.RenewInterval = renew[0]
 	}
