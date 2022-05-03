@@ -9,6 +9,14 @@ body {
     font-size: 14px;
     font:13px/1.231 arial,helvetica,sans-serif;
 }
+header {
+    padding-top: 20px;
+    margin-bottom: 20px;
+    height: 50px;
+}
+footer {
+    height: 50px;
+}
 table {
   border-collapse: collapse;
   border-spacing: 0;
