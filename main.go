@@ -36,7 +36,7 @@ func main() {
 	if wmstatsFile != "" {
 		wmgr := NewWMStatsManager(wmstatsFile)
 		wmgr.update()
-		cmap, smap, rmap, amap := wmstats(wmgr)
+		cmap, smap, rmap, amap := wmstats(wmgr, 1)
 		fmt.Println("campaign map", len(cmap))
 		fmt.Println("site map", len(smap))
 		fmt.Println("release map", len(rmap))

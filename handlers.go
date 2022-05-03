@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"time"
 )
 
 // HTTPError represents HTTP error structure
@@ -51,6 +52,11 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+var _campaignMap CampaignStatsMap
+var _siteMap SiteStatsMap
+var _cmsswMap CMSSWStatsMap
+var _agentMap AgentStatsMap
+
 // MainHandler provides access to main page of server
 func MainHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
@@ -58,18 +64,20 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 
 	// get data
 	wMgr.update()
-	cmap, smap, rmap, amap := wmstats(wMgr)
+	if _siteMap == nil || wMgr.TTL < time.Now().Unix() {
+		_campaignMap, _siteMap, _cmsswMap, _agentMap = wmstats(wMgr, 0)
+	}
 	var table string
 	if stats == "agent" {
-		table = amap.HTMLTable()
+		table = _agentMap.HTMLTable()
 	} else if stats == "site" {
-		table = smap.HTMLTable()
+		table = _siteMap.HTMLTable()
 	} else if stats == "cmssw" {
-		table = rmap.HTMLTable()
+		table = _cmsswMap.HTMLTable()
 	} else if stats == "campaign" {
-		table = cmap.HTMLTable()
+		table = _campaignMap.HTMLTable()
 	} else {
-		table = cmap.HTMLTable()
+		table = _campaignMap.HTMLTable()
 	}
 
 	// create temaplate

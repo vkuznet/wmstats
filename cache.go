@@ -18,6 +18,10 @@ type WMStatsManager struct {
 	Data          []byte // wmstats data
 	TTL           int64  // time-to-live of current cache snapshot
 	RenewInterval int64  // renew interval for cache
+	CampaignMap   CampaignStatsMap
+	SiteMap       SiteStatsMap
+	CMSSWMap      CMSSWStatsMap
+	AgentMap      AgentStatsMap
 }
 
 // helper function to update cache

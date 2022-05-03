@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	// data set
 	"github.com/fatih/set"
@@ -24,13 +25,13 @@ type SiteStatsMap map[string]SiteStats
 
 // HTMLTable implements WMStatsMap interface
 func (wmap SiteStatsMap) HTMLTable() string {
-	t := "<table><tr>\n"
-	t += "<th>Site</th>"
-	t += "<th>Requests</th>"
-	t += "<th>Pending</th>"
-	t += "<th>Running</th>"
-	t += "<th>CoolOff</th>"
-	t += "<th>Failure Rate</th>"
+	t := `<table id="site-stats"><tr>`
+	t += `<th onclick="sortTable('site-stats', 0)">Site</th>`
+	t += `<th onclick="sortTable('site-stats', 1)">Requests</th>`
+	t += `<th onclick="sortTable('site-stats', 2)">Pending</th>`
+	t += `<th onclick="sortTable('site-stats', 3)">Running</th>`
+	t += `<th onclick="sortTable('site-stats', 4)">CoolOff</th>`
+	t += `<th onclick="sortTable('site-stats', 5)">Failure Rate</th>`
 	t += "</tr>\n"
 	for key, data := range wmap {
 		t += "<tr>"
@@ -51,14 +52,14 @@ type CampaignStatsMap map[string]CampaignStats
 
 // HTMLTable implements WMStatsMap interface
 func (wmap CampaignStatsMap) HTMLTable() string {
-	t := "<table><tr>\n"
-	t += "<th>Campaign</th>"
-	t += "<th>Requests</th>"
-	t += "<th>Job Progress</th>"
-	t += "<th>Event Progress</th>"
-	t += "<th>Lumi Progress</th>"
-	t += "<th>Failure Rate</th>"
-	t += "<th>CoolOff</th>"
+	t := `<table id="campaign-stats"><tr>`
+	t += `<th onclick="sortTable('campaign-stats', 0)">Campaign</th>`
+	t += `<th onclick="sortTable('campaign-stats', 1)">Requests</th>`
+	t += `<th onclick="sortTable('campaign-stats', 2)">Job Progress</th>`
+	t += `<th onclick="sortTable('campaign-stats', 3)">Event Progress</th>`
+	t += `<th onclick="sortTable('campaign-stats', 4)">Lumi Progress</th>`
+	t += `<th onclick="sortTable('campaign-stats', 5)">Failure Rate</th>`
+	t += `<th onclick="sortTable('campaign-stats', 6)">Cool off</th>`
 	t += "</tr>\n"
 	for key, data := range wmap {
 		t += "<tr>"
@@ -80,7 +81,24 @@ type AgentStatsMap map[string]AgentStats
 
 // HTMLTable implements WMStatsMap interface
 func (wmap AgentStatsMap) HTMLTable() string {
-	return ""
+	t := `<table id="agent-stats"><tr>`
+	t += `<th onclick="sortTable('agent-stats', 0)">Agent</th>`
+	t += `<th onclick="sortTable('agent-stats', 1)">Requests</th>`
+	t += `<th onclick="sortTable('agent-stats', 2)">Job Progress</th>`
+	t += `<th onclick="sortTable('agent-stats', 3)">Failure Rate</th>`
+	t += `<th onclick="sortTable('agent-stats', 4)">Cool off</th>`
+	t += "</tr>\n"
+	for key, data := range wmap {
+		t += "<tr>"
+		t += fmt.Sprintf("<td>%v</td>", key)
+		t += fmt.Sprintf("<td>%v</td>", data.Requests)
+		t += fmt.Sprintf("<td>%v</td>", data.JobProgress)
+		t += fmt.Sprintf("<td>%v</td>", data.FailureRate)
+		t += fmt.Sprintf("<td>%v</td>", data.CoolOff)
+		t += "</tr>\n"
+	}
+	t += "</table>"
+	return t
 }
 
 // CMSSWStatsMap
@@ -88,10 +106,33 @@ type CMSSWStatsMap map[string]CMSSWStats
 
 // HTMLTable implements WMStatsMap interface
 func (wmap CMSSWStatsMap) HTMLTable() string {
-	return ""
+	t := `<table id="cmssw-stats"><tr>`
+	t += `<th onclick="sortTable('cmssw-stats', 0)">CMSSW</th>`
+	t += `<th onclick="sortTable('cmssw-stats', 1)">Requests</th>`
+	t += `<th onclick="sortTable('cmssw-stats', 2)">Job Progress</th>`
+	t += `<th onclick="sortTable('cmssw-stats', 3)">Event Progress</th>`
+	t += `<th onclick="sortTable('cmssw-stats', 4)">Lumi Progress</th>`
+	t += `<th onclick="sortTable('cmssw-stats', 5)">Failure Rate</th>`
+	t += `<th onclick="sortTable('cmssw-stats', 6)">Cool off</th>`
+	t += "</tr>\n"
+	for key, data := range wmap {
+		t += "<tr>"
+		t += fmt.Sprintf("<td>%v</td>", key)
+		t += fmt.Sprintf("<td>%v</td>", data.Requests)
+		t += fmt.Sprintf("<td>%v</td>", data.JobProgress)
+		t += fmt.Sprintf("<td>%v</td>", data.EventProgress)
+		t += fmt.Sprintf("<td>%v</td>", data.LumiProgress)
+		t += fmt.Sprintf("<td>%v</td>", data.FailureRate)
+		t += fmt.Sprintf("<td>%v</td>", data.CoolOff)
+		t += "</tr>\n"
+	}
+	t += "</table>"
+	return t
 }
 
-func wmstats(wmgr *WMStatsManager) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMap, AgentStatsMap) {
+// wmstats provide aggregated statistics
+func wmstats(wmgr *WMStatsManager, verbose int) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMap, AgentStatsMap) {
+	time0 := time.Now()
 	// update our cache
 	wmgr.update()
 	var wmstats WMStatsResults
@@ -118,8 +159,10 @@ func wmstats(wmgr *WMStatsManager) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMa
 	// main loop
 	for _, info := range data {
 		for workflow, rdict := range info {
-			fmt.Println(workflow)
-			//             fmt.Printf("%+v\n", rdict)
+			if verbose > 0 {
+				fmt.Println(workflow)
+				//             fmt.Printf("%+v\n", rdict)
+			}
 			cmssw := rdict.CMSSWVersion
 			workflow := rdict.RequestName
 			//             totalEvents := rdict.TotalInputEvents
@@ -206,16 +249,22 @@ func wmstats(wmgr *WMStatsManager) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMa
 		}
 	}
 	// prepare site stats dict
-	fmt.Println("### Total site stats", len(smap))
+	if verbose > 0 {
+		fmt.Println("### Total site stats", len(smap))
+	}
 	for site, stats := range smap {
-		fmt.Println("site", site)
+		if verbose > 0 {
+			fmt.Println("site", site)
+		}
 		workflows, _ := sWorkflows[site]
 		stats.Requests = workflows.Size()
 		totJobs := stats.SuccessJobs + stats.FailJobs
 		if totJobs != 0 {
 			stats.FailureRate = 100 * float64(stats.FailJobs) / float64(totJobs)
 		}
-		fmt.Printf("%+v\n", stats)
+		if verbose > 0 {
+			fmt.Printf("%+v\n", stats)
+		}
 	}
 
 	// collect campaign summary from workflow map
@@ -235,7 +284,10 @@ func wmstats(wmgr *WMStatsManager) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMa
 		//         fmt.Printf("workflow: %s\n", workflow)
 		//         fmt.Printf("%+v\n", winfo)
 	}
-	fmt.Println("### Total campaign stats", len(cmap))
+	if verbose > 0 {
+		fmt.Println("### Total campaign stats", len(cmap))
+	}
+
 	//     fmt.Println("### campaign summary")
 	//     for c, data := range campaignSummary {
 	//         log.Println(c, data)
@@ -243,7 +295,9 @@ func wmstats(wmgr *WMStatsManager) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMa
 
 	// prepare campaign stats dict
 	for campaign, stats := range cmap {
-		fmt.Println("campaign", campaign)
+		if verbose > 0 {
+			fmt.Println("campaign", campaign)
+		}
 		if cs, ok := campaignSummary[campaign]; ok {
 			stats.JobProgress = cs.JobProgress()
 			stats.EventProgress = cs.EventProgress()
@@ -253,20 +307,30 @@ func wmstats(wmgr *WMStatsManager) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMa
 			stats.CoolOff = cs.Status.CoolOff.Sum()
 			cmap[campaign] = stats
 		}
-		fmt.Printf("%+v\n", stats)
+		if verbose > 0 {
+			fmt.Printf("%+v\n", stats)
+		}
 	}
-	fmt.Println("### agent summary", len(agentSummary))
+	if verbose > 0 {
+		fmt.Println("### agent summary", len(agentSummary))
+	}
 	for agent, data := range agentSummary {
-		fmt.Println("agent:", agent)
-		fmt.Printf("%+v\n", data)
+		if verbose > 0 {
+			fmt.Println("agent:", agent)
+			fmt.Printf("%+v\n", data)
+		}
 	}
 
-	fmt.Println("### cmssw summary", len(cmsswSummary))
-	for cmssw, data := range cmsswSummary {
-		fmt.Println("cmssw:", cmssw)
-		fmt.Printf("%+v\n", data)
+	if verbose > 0 {
+		fmt.Println("### cmssw summary", len(cmsswSummary))
 	}
-	fmt.Println("### Total number of workflows", len(wmap))
+	for cmssw, data := range cmsswSummary {
+		if verbose > 0 {
+			fmt.Println("cmssw:", cmssw)
+			fmt.Printf("%+v\n", data)
+		}
+	}
+	fmt.Println("### Total number of workflows", len(wmap), "in", time.Since(time0))
 	return cmap, smap, rmap, amap
 }
 
