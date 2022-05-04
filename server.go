@@ -71,6 +71,7 @@ func Handlers() *mux.Router {
 	router.HandleFunc(basePath("/alerts"), AlertsHandler).Methods("GET")
 	router.HandleFunc(basePath("/agents"), AgentsHandler).Methods("GET")
 	router.HandleFunc(basePath("/errorlogs"), ErrorLogsHandler).Methods("GET")
+	router.HandleFunc(basePath("/workflows"), WorkflowsHandler).Methods("GET")
 	router.HandleFunc(basePath("/"), MainHandler).Methods("GET")
 
 	// for all requests

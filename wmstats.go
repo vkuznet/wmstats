@@ -63,7 +63,9 @@ func (wmap CampaignStatsMap) HTMLTable() string {
 	t += "</tr>\n"
 	for key, data := range wmap {
 		t += "<tr>"
-		t += fmt.Sprintf("<td>%v</td>", key)
+		link := fmt.Sprintf("%s/workflows?campaign=%s", Config.Base, key)
+		ahref := fmt.Sprintf("<a href=\"%s\">%s</a>", link, key)
+		t += fmt.Sprintf("<td>%v</td>", ahref)
 		t += fmt.Sprintf("<td>%v</td>", data.Requests)
 		t += fmt.Sprintf("<td>%v</td>", data.JobProgress)
 		t += fmt.Sprintf("<td>%v</td>", data.EventProgress)
@@ -130,11 +132,61 @@ func (wmap CMSSWStatsMap) HTMLTable() string {
 	return t
 }
 
+// WorkflowMap provides list of workflows for a given key, e.g. campaign
+type WorkflowMap map[string][]Workflow
+
+// HTMLTable implements WMStatsMap interface
+func workflowHTMLTable(workflows []Workflow) string {
+	t := `<table id="wmap"><tr>`
+	t += `<th onclick="sortTable('wmap', 0)">Workflow</th>`
+	t += `<th onclick="sortTable('wmap', 1)">Status</th>`
+	t += `<th onclick="sortTable('wmap', 2)">Type</th>`
+	t += `<th onclick="sortTable('wmap', 3)">Priority</th>`
+	t += `<th onclick="sortTable('wmap', 4)">Queue Injection</th>`
+	t += `<th onclick="sortTable('wmap', 5)">Job Progress</th>`
+	t += `<th onclick="sortTable('wmap', 6)">Event Progress</th>`
+	t += `<th onclick="sortTable('wmap', 7)">Lumi Progress</th>`
+	t += `<th onclick="sortTable('wmap', 8)">Failure Rate</th>`
+	t += `<th onclick="sortTable('wmap', 9)">Estimated completion</th>`
+	t += `<th onclick="sortTable('wmap', 10)">Cool off</th>`
+	t += "</tr>\n"
+	for _, data := range workflows {
+		t += "<tr>"
+		link := fmt.Sprintf("https://cmsweb.cern.ch/reqmgr2/fetch?rid=%s", data.Workflow)
+		ahref := fmt.Sprintf("<a href=\"%s\">%s</a>", link, data.Workflow)
+		t += fmt.Sprintf("<td>%v</td>", ahref)
+		t += fmt.Sprintf("<td>%v</td>", data.Status)
+		t += fmt.Sprintf("<td>%v</td>", data.Type)
+		t += fmt.Sprintf("<td>%v</td>", data.Priority)
+		t += fmt.Sprintf("<td>%v</td>", data.QueueInjection)
+		t += fmt.Sprintf("<td>%v</td>", data.JobProgress)
+		t += fmt.Sprintf("<td>%v</td>", data.EventProgress)
+		t += fmt.Sprintf("<td>%v</td>", data.LumiProgress)
+		t += fmt.Sprintf("<td>%v</td>", data.FailureRate)
+		t += fmt.Sprintf("<td>%v</td>", data.EstimatedCompletion)
+		t += fmt.Sprintf("<td>%v</td>", data.CoolOff)
+		t += "</tr>\n"
+	}
+	t += "</table>"
+	return t
+}
+
+// WMStatsInfo represent wmstats info structure
+type WMStatsInfo struct {
+	CampaignStatsMap  CampaignStatsMap
+	SiteStatsMap      SiteStatsMap
+	CMSSWStatsMap     CMSSWStatsMap
+	AgentStatsMap     AgentStatsMap
+	CampaignWorkflows WorkflowMap
+	SiteWorkflows     WorkflowMap
+	CMSSWWorkflows    WorkflowMap
+	AgentWorkflows    WorkflowMap
+}
+
 // wmstats provide aggregated statistics
-func wmstats(wmgr *WMStatsManager, verbose int) (CampaignStatsMap, SiteStatsMap, CMSSWStatsMap, AgentStatsMap) {
+func wmstats(wmgr *WMStatsManager, verbose int) *WMStatsInfo {
 	time0 := time.Now()
-	// update our cache
-	wmgr.update()
+	// update our cacheAgentStatsMawmgr.update()
 	var wmstats WMStatsResults
 	err := json.Unmarshal(wmgr.Data, &wmstats)
 	if err != nil {
@@ -156,6 +208,12 @@ func wmstats(wmgr *WMStatsManager, verbose int) (CampaignStatsMap, SiteStatsMap,
 	sWorkflows := make(map[string]set.Interface)
 	wmap := make(map[string]WorkflowInfo)
 
+	// create workflow maps
+	campaignMap := make(WorkflowMap)
+	siteMap := make(WorkflowMap)
+	cmsswMap := make(WorkflowMap)
+	agentMap := make(WorkflowMap)
+
 	// main loop
 	for _, info := range data {
 		for workflow, rdict := range info {
@@ -165,8 +223,25 @@ func wmstats(wmgr *WMStatsManager, verbose int) (CampaignStatsMap, SiteStatsMap,
 			}
 			cmssw := rdict.CMSSWVersion
 			workflow := rdict.RequestName
+			campaign := rdict.Campaign
 			//             totalEvents := rdict.TotalInputEvents
 			//             totalLumis := rdict.TotalInputLumis
+
+			wObj := Workflow{
+				Workflow:            workflow,
+				QueueInjection:      0.0,
+				JobProgress:         0.0,
+				EventProgress:       0.0,
+				LumiProgress:        0.0,
+				FailureRate:         0.0,
+				Status:              rdict.RequestStatus,
+				Type:                rdict.RequestType,
+				EstimatedCompletion: "N/A",
+				Priority:            rdict.RequestPriority,
+				CoolOff:             0,
+			}
+			updateMap(campaignMap, campaign, wObj)
+			updateMap(cmsswMap, cmssw, wObj)
 
 			// collect workflow information
 			wInfo := WorkflowInfo{
@@ -189,6 +264,7 @@ func wmstats(wmgr *WMStatsManager, verbose int) (CampaignStatsMap, SiteStatsMap,
 			// collect site statistics from AgentJobInfo map
 			var agents []string
 			for agent, ainfo := range rdict.AgentJobInfoMap {
+				updateMap(agentMap, agent, wObj)
 				agents = append(agents, agent)
 				workflow := ainfo.Workflow
 				status := ainfo.Status
@@ -211,6 +287,7 @@ func wmstats(wmgr *WMStatsManager, verbose int) (CampaignStatsMap, SiteStatsMap,
 
 				// update site info
 				for site, status := range ainfo.Sites {
+					updateMap(siteMap, site, wObj)
 					coolOff := status.CoolOff.Sum()
 					pending := status.Submitted.Pending
 					running := status.Submitted.Running
@@ -331,7 +408,17 @@ func wmstats(wmgr *WMStatsManager, verbose int) (CampaignStatsMap, SiteStatsMap,
 		}
 	}
 	fmt.Println("### Total number of workflows", len(wmap), "in", time.Since(time0))
-	return cmap, smap, rmap, amap
+	stats := WMStatsInfo{
+		CampaignStatsMap:  cmap,
+		SiteStatsMap:      smap,
+		CMSSWStatsMap:     rmap,
+		AgentStatsMap:     amap,
+		CampaignWorkflows: campaignMap,
+		SiteWorkflows:     siteMap,
+		CMSSWWorkflows:    cmsswMap,
+		AgentWorkflows:    agentMap,
+	}
+	return &stats
 }
 
 func updateReleaseSummary(cmssw string, cmsswSummary map[string]CMSSWSummary, status Status) {
@@ -359,5 +446,14 @@ func updateAgentSummary(agent string, agentSummary map[string]AgentSummary, stat
 		ainfo.Status.Update(status)
 		ainfo.CoolOff += ainfo.Status.CoolOff.Sum()
 		agentSummary[agent] = ainfo
+	}
+}
+
+func updateMap(wmap WorkflowMap, key string, workflow Workflow) {
+	if vals, ok := wmap[key]; ok {
+		vals = append(vals, workflow)
+		wmap[key] = vals
+	} else {
+		wmap[key] = []Workflow{workflow}
 	}
 }

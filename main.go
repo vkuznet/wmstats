@@ -36,11 +36,11 @@ func main() {
 	if wmstatsFile != "" {
 		wmgr := NewWMStatsManager(wmstatsFile)
 		wmgr.update()
-		cmap, smap, rmap, amap := wmstats(wmgr, 1)
-		fmt.Println("campaign map", len(cmap))
-		fmt.Println("site map", len(smap))
-		fmt.Println("release map", len(rmap))
-		fmt.Println("agent map", len(amap))
+		_wmstatsInfo := wmstats(wmgr, 1)
+		fmt.Println("campaign map", len(_wmstatsInfo.CampaignStatsMap))
+		fmt.Println("site map", len(_wmstatsInfo.SiteStatsMap))
+		fmt.Println("release map", len(_wmstatsInfo.CMSSWStatsMap))
+		fmt.Println("agent map", len(_wmstatsInfo.AgentStatsMap))
 	} else {
 		Server(config)
 	}

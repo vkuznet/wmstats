@@ -183,16 +183,18 @@ type WorkflowInfo struct {
 	Status   Status
 }
 
+// Workflow represents workflow data structure
 type Workflow struct {
 	QueueInjection      float64
 	JobProgress         float64
 	EventProgress       float64
 	LumiProgress        float64
 	FailureRate         float64
+	Priority            float64
+	Workflow            string
 	Status              string
 	Type                string
 	EstimatedCompletion string
-	Priority            int
 	CoolOff             int
 }
 

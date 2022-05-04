@@ -52,10 +52,8 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-var _campaignMap CampaignStatsMap
-var _siteMap SiteStatsMap
-var _cmsswMap CMSSWStatsMap
-var _agentMap AgentStatsMap
+// global pointer to wmstats info
+var _wmstatsInfo *WMStatsInfo
 
 // MainHandler provides access to main page of server
 func MainHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,20 +62,20 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 
 	// get data
 	wMgr.update()
-	if _siteMap == nil || wMgr.TTL < time.Now().Unix() {
-		_campaignMap, _siteMap, _cmsswMap, _agentMap = wmstats(wMgr, 0)
+	if _wmstatsInfo == nil || wMgr.TTL < time.Now().Unix() {
+		_wmstatsInfo = wmstats(wMgr, 0)
 	}
 	var table string
 	if stats == "agent" {
-		table = _agentMap.HTMLTable()
+		table = _wmstatsInfo.AgentStatsMap.HTMLTable()
 	} else if stats == "site" {
-		table = _siteMap.HTMLTable()
+		table = _wmstatsInfo.SiteStatsMap.HTMLTable()
 	} else if stats == "cmssw" {
-		table = _cmsswMap.HTMLTable()
+		table = _wmstatsInfo.CMSSWStatsMap.HTMLTable()
 	} else if stats == "campaign" {
-		table = _campaignMap.HTMLTable()
+		table = _wmstatsInfo.CampaignStatsMap.HTMLTable()
 	} else {
-		table = _campaignMap.HTMLTable()
+		table = _wmstatsInfo.CampaignStatsMap.HTMLTable()
 	}
 
 	// create temaplate
@@ -134,6 +132,51 @@ func ErrorLogsHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl["Footer"] = _footer
 
 	page := tmplPage("errorlogs.tmpl", tmpl)
+	w.Write([]byte(string(_top) + page + string(_bottom)))
+}
+
+// WorkflowsHandler provides access to workflows page of server
+func WorkflowsHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	campaign := query.Get("campaign")
+	site := query.Get("site")
+	cmssw := query.Get("cmssw")
+	agent := query.Get("agent")
+
+	// get data
+	wMgr.update()
+	if _wmstatsInfo == nil || wMgr.TTL < time.Now().Unix() {
+		_wmstatsInfo = wmstats(wMgr, 0)
+	}
+	table := "Unkown key"
+	if campaign != "" {
+		if workflows, ok := _wmstatsInfo.CampaignWorkflows[campaign]; ok {
+			table = workflowHTMLTable(workflows)
+		}
+	} else if site != "" {
+		if workflows, ok := _wmstatsInfo.SiteWorkflows[site]; ok {
+			table = workflowHTMLTable(workflows)
+		}
+	} else if cmssw != "" {
+		if workflows, ok := _wmstatsInfo.CMSSWWorkflows[cmssw]; ok {
+			table = workflowHTMLTable(workflows)
+		}
+	} else if agent != "" {
+		if workflows, ok := _wmstatsInfo.AgentWorkflows[agent]; ok {
+			table = workflowHTMLTable(workflows)
+		}
+	}
+
+	// create temaplate
+	tmpl := make(TmplRecord)
+	tmpl["Base"] = Config.Base
+	tmpl["ServerInfo"] = ServerInfo
+	tmpl["Menu"] = template.HTML(tmplPage("menu.tmpl", tmpl))
+	tmpl["Header"] = _header
+	tmpl["Footer"] = _footer
+	tmpl["Table"] = template.HTML(table)
+
+	page := tmplPage("main.tmpl", tmpl)
 	w.Write([]byte(string(_top) + page + string(_bottom)))
 }
 
