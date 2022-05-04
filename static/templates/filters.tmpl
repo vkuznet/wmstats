@@ -1,10 +1,34 @@
-<!-- toggle element -->
+<!-- filters element -->
+<form method="post" action="">
+    <div class="form-item">
+        <div class="is-row">
+            <div class="is-col is-80">
+                <input type="text" name="search" placeholder="value or pattern">
+            </div>
+            <div class="is-col is-20">
+                <select name="filter" class="button is-secondary">
+                    <option value="" disabled="disabled">Filter</option>
+                    <option value="campaign">Campaign</option>
+                    <option value="campaignworkflow">Workflow</option>
+                    <option value="campaigntype">Type</option>
+                    <option value="campaignstatus">Status</option>
+                    <option value="campaigninput-dataset">Input dataset</option>
+                    <option value="campaignoutput-dataset">Output dataset</option>
+                    <option value="campaignsite">Site</option>
+                    <option value="campaignteam">Team</option>
+                    <option value="campaignagent">Agent</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</form>
+
+
+<!--
 <button data-kube="dropdown" data-target="#dropdown-1" class="button is-secondary" data-loaded="true">
     Filters
     <span class="caret is-down"></span>
 </button>
-
-<!-- dropdown box -->
 <div id="dropdown-1" class="dropdown" style="top: 1899.34px; left: 53px;" domtargethide="is-hidden">
     <a href="#">Campaign</a>
     <a href="#">Workflow</a>
@@ -16,3 +40,4 @@
     <a href="#">Team</a>
     <a href="#">Agent</a>
 </div>
+-->

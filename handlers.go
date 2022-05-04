@@ -85,7 +85,7 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl["ServerInfo"] = ServerInfo
 	tmpl["Table"] = template.HTML(table)
 	tmpl["Menu"] = template.HTML(tmplPage("menu.tmpl", tmpl))
-	tmpl["Search"] = template.HTML(tmplPage("search.tmpl", tmpl))
+//     tmpl["Search"] = template.HTML(tmplPage("search.tmpl", tmpl))
 	tmpl["Filter"] = template.HTML(tmplPage("filters.tmpl", tmpl))
 	tmpl["Header"] = _header
 	tmpl["Footer"] = _footer
