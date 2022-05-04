@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -149,21 +150,30 @@ func WorkflowsHandler(w http.ResponseWriter, r *http.Request) {
 		_wmstatsInfo = wmstats(wMgr, 0)
 	}
 	table := "Unkown key"
+	title := ""
 	if campaign != "" {
 		if workflows, ok := _wmstatsInfo.CampaignWorkflows[campaign]; ok {
 			table = workflowHTMLTable(workflows)
+			val := fmt.Sprintf("<span class=\"alert is-focus\">%s</span>", campaign)
+			title = fmt.Sprintf("<h4>Workflows associated with %s campaign</h4>", val)
 		}
 	} else if site != "" {
 		if workflows, ok := _wmstatsInfo.SiteWorkflows[site]; ok {
 			table = workflowHTMLTable(workflows)
+			val := fmt.Sprintf("<span class=\"alert is-focus\">%s</span>", site)
+			title = fmt.Sprintf("<h4>Workflows associated with %s site</h4>", val)
 		}
 	} else if cmssw != "" {
 		if workflows, ok := _wmstatsInfo.CMSSWWorkflows[cmssw]; ok {
 			table = workflowHTMLTable(workflows)
+			val := fmt.Sprintf("<span class=\"alert is-focus\">%s</span>", cmssw)
+			title = fmt.Sprintf("<h4>Workflows associated with with %s</h4>", val)
 		}
 	} else if agent != "" {
 		if workflows, ok := _wmstatsInfo.AgentWorkflows[agent]; ok {
 			table = workflowHTMLTable(workflows)
+			val := fmt.Sprintf("<span class=\"alert is-focus\">%s</span>", agent)
+			title = fmt.Sprintf("<h4>Workflows associated with %s agent</h4>", val)
 		}
 	}
 
@@ -174,6 +184,7 @@ func WorkflowsHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl["Menu"] = template.HTML(tmplPage("menu.tmpl", tmpl))
 	tmpl["Header"] = _header
 	tmpl["Footer"] = _footer
+	tmpl["Title"] = template.HTML(title)
 	tmpl["Table"] = template.HTML(table)
 
 	page := tmplPage("main.tmpl", tmpl)

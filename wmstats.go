@@ -25,7 +25,7 @@ type SiteStatsMap map[string]SiteStats
 
 // HTMLTable implements WMStatsMap interface
 func (wmap SiteStatsMap) HTMLTable() string {
-	t := `<table id="site-stats"><tr>`
+	t := `<table class="is-striped is-bordered" id="site-stats"><tr>`
 	t += `<th onclick="sortTable('site-stats', 0)">Site</th>`
 	t += `<th onclick="sortTable('site-stats', 1)">Requests</th>`
 	t += `<th onclick="sortTable('site-stats', 2)">Pending</th>`
@@ -52,7 +52,7 @@ type CampaignStatsMap map[string]CampaignStats
 
 // HTMLTable implements WMStatsMap interface
 func (wmap CampaignStatsMap) HTMLTable() string {
-	t := `<table id="campaign-stats"><tr>`
+	t := `<table class="is-striped is-bordered" id="campaign-stats"><tr>`
 	t += `<th onclick="sortTable('campaign-stats', 0)">Campaign</th>`
 	t += `<th onclick="sortTable('campaign-stats', 1)">Requests</th>`
 	t += `<th onclick="sortTable('campaign-stats', 2)">Job Progress</th>`
@@ -83,7 +83,7 @@ type AgentStatsMap map[string]AgentStats
 
 // HTMLTable implements WMStatsMap interface
 func (wmap AgentStatsMap) HTMLTable() string {
-	t := `<table id="agent-stats"><tr>`
+	t := `<table class="is-striped is-bordered" id="agent-stats"><tr>`
 	t += `<th onclick="sortTable('agent-stats', 0)">Agent</th>`
 	t += `<th onclick="sortTable('agent-stats', 1)">Requests</th>`
 	t += `<th onclick="sortTable('agent-stats', 2)">Job Progress</th>`
@@ -108,7 +108,7 @@ type CMSSWStatsMap map[string]CMSSWStats
 
 // HTMLTable implements WMStatsMap interface
 func (wmap CMSSWStatsMap) HTMLTable() string {
-	t := `<table id="cmssw-stats"><tr>`
+	t := `<table class="is-striped is-bordered" id="cmssw-stats"><tr>`
 	t += `<th onclick="sortTable('cmssw-stats', 0)">CMSSW</th>`
 	t += `<th onclick="sortTable('cmssw-stats', 1)">Requests</th>`
 	t += `<th onclick="sortTable('cmssw-stats', 2)">Job Progress</th>`
@@ -137,7 +137,7 @@ type WorkflowMap map[string][]Workflow
 
 // HTMLTable implements WMStatsMap interface
 func workflowHTMLTable(workflows []Workflow) string {
-	t := `<table id="wmap"><tr>`
+	t := `<table class="is-striped is-bordered" id="wmap"><tr>`
 	t += `<th onclick="sortTable('wmap', 0)">Workflow</th>`
 	t += `<th onclick="sortTable('wmap', 1)">Status</th>`
 	t += `<th onclick="sortTable('wmap', 2)">Type</th>`
