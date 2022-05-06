@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"regexp"
 	"time"
 
 	// data set
@@ -389,7 +390,7 @@ func wmstats(wmgr *WMStatsManager, filters WMStatsFilters, verbose int) *WMStats
 	// main loop
 	for _, info := range data {
 		for workflow, rdict := range info {
-			if verbose > 0 {
+			if verbose > 1 {
 				fmt.Println(workflow)
 				//             fmt.Printf("%+v\n", rdict)
 			}
@@ -498,11 +499,12 @@ func wmstats(wmgr *WMStatsManager, filters WMStatsFilters, verbose int) *WMStats
 		}
 	}
 	// prepare site stats dict
-	if verbose > 0 {
+	if verbose > 1 {
 		fmt.Println("### Total site stats", len(smap))
 	}
+	var sites []string
 	for site, stats := range smap {
-		if verbose > 0 {
+		if verbose > 1 {
 			fmt.Println("site", site)
 		}
 		workflows, _ := sWorkflows[site]
@@ -511,14 +513,29 @@ func wmstats(wmgr *WMStatsManager, filters WMStatsFilters, verbose int) *WMStats
 		if totJobs != 0 {
 			stats.FailureRate = 100 * float64(stats.FailJobs) / float64(totJobs)
 		}
-		if verbose > 0 {
+		if verbose > 1 {
 			fmt.Printf("%+v\n", stats)
+		}
+		sites = append(sites, site)
+	}
+	// filter out sites
+	for _, site := range sites {
+		if pat, ok := filters["site"]; ok {
+			if matched, err := regexp.MatchString(pat, site); err == nil && !matched {
+				delete(smap, site)
+			}
 		}
 	}
 
 	// collect campaign summary from workflow map
 	for _, winfo := range wmap {
 		campaign := winfo.Campaign
+		// filter out unnecessary campaigns
+		if pat, ok := filters["campaign"]; ok {
+			if matched, err := regexp.MatchString(pat, campaign); err == nil && !matched {
+				continue
+			}
+		}
 		if cs, ok := campaignSummary[campaign]; ok {
 			cs.Requests += 1
 			cs.Status.Update(winfo.Status)
@@ -533,7 +550,7 @@ func wmstats(wmgr *WMStatsManager, filters WMStatsFilters, verbose int) *WMStats
 		//         fmt.Printf("workflow: %s\n", workflow)
 		//         fmt.Printf("%+v\n", winfo)
 	}
-	if verbose > 0 {
+	if verbose > 1 {
 		fmt.Println("### Total campaign stats", len(cmap))
 	}
 
@@ -544,7 +561,7 @@ func wmstats(wmgr *WMStatsManager, filters WMStatsFilters, verbose int) *WMStats
 
 	// prepare campaign stats dict
 	for campaign, stats := range cmap {
-		if verbose > 0 {
+		if verbose > 1 {
 			fmt.Println("campaign", campaign)
 		}
 		if cs, ok := campaignSummary[campaign]; ok {
@@ -556,25 +573,25 @@ func wmstats(wmgr *WMStatsManager, filters WMStatsFilters, verbose int) *WMStats
 			stats.CoolOff = cs.Status.CoolOff.Sum()
 			cmap[campaign] = stats
 		}
-		if verbose > 0 {
+		if verbose > 1 {
 			fmt.Printf("%+v\n", stats)
 		}
 	}
-	if verbose > 0 {
+	if verbose > 1 {
 		fmt.Println("### agent summary", len(agentSummary))
 	}
 	for agent, data := range agentSummary {
-		if verbose > 0 {
+		if verbose > 1 {
 			fmt.Println("agent:", agent)
 			fmt.Printf("%+v\n", data)
 		}
 	}
 
-	if verbose > 0 {
+	if verbose > 1 {
 		fmt.Println("### cmssw summary", len(cmsswSummary))
 	}
 	for cmssw, data := range cmsswSummary {
-		if verbose > 0 {
+		if verbose > 1 {
 			fmt.Println("cmssw:", cmssw)
 			fmt.Printf("%+v\n", data)
 		}
