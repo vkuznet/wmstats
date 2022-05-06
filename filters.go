@@ -1,5 +1,10 @@
 package main
 
+// wmstats filters module
+//
+// Copyright (c) 2022 - Valentin Kuznetsov <vkuznet@gmail.com>
+//
+
 import "strings"
 
 type WMStatsFilters map[string]string

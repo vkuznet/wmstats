@@ -1,5 +1,10 @@
 package main
 
+// wmstats cli module
+//
+// Copyright (c) 2022 - Valentin Kuznetsov <vkuznet@gmail.com>
+//
+
 import (
 	"fmt"
 	"strings"
