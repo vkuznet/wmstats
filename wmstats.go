@@ -47,6 +47,48 @@ func (wmap SiteStatsMap) HTMLTable() string {
 	return t
 }
 
+// CliTable implements WMStatsMap interface
+func (wmap SiteStatsMap) CliTable() ([]string, [][]string, []int) {
+	headers := []string{
+		"Site", "Requests", "Pending", "Running", "CoolOff", "Failure Raute",
+	}
+	paddings := make([]int, len(headers))
+	for k, v := range headers {
+		paddings[k] = len(v)
+	}
+	var allValues [][]string
+	for site, data := range wmap {
+		if len(site) > paddings[0] {
+			paddings[0] = len(site)
+		}
+		requests := fmt.Sprintf("%v", data.Requests)
+		if len(requests) > paddings[1] {
+			paddings[1] = len(requests)
+		}
+		pending := fmt.Sprintf("%v", data.Pending)
+		if len(pending) > paddings[2] {
+			paddings[2] = len(pending)
+		}
+		running := fmt.Sprintf("%v", data.Running)
+		if len(running) > paddings[3] {
+			paddings[3] = len(running)
+		}
+		cooloff := fmt.Sprintf("%v", data.CoolOff)
+		if len(cooloff) > paddings[4] {
+			paddings[4] = len(cooloff)
+		}
+		failureRate := fmt.Sprintf("%v", data.FailureRate)
+		if len(failureRate) > paddings[5] {
+			paddings[5] = len(failureRate)
+		}
+		values := []string{
+			site, requests, pending, running, cooloff, failureRate,
+		}
+		allValues = append(allValues, values)
+	}
+	return headers, allValues, paddings
+}
+
 // CampaignStatsMap
 type CampaignStatsMap map[string]CampaignStats
 
@@ -78,6 +120,52 @@ func (wmap CampaignStatsMap) HTMLTable() string {
 	return t
 }
 
+// CliTable implements WMStatsMap interface
+func (wmap CampaignStatsMap) CliTable() ([]string, [][]string, []int) {
+	headers := []string{
+		"Campaign", "Requests", "JobProgress", "EventProgress", "LumiProgress", "Failure Raute", "CoolOff",
+	}
+	paddings := make([]int, len(headers))
+	for k, v := range headers {
+		paddings[k] = len(v)
+	}
+	var allValues [][]string
+	for campaign, data := range wmap {
+		if len(campaign) > paddings[0] {
+			paddings[0] = len(campaign)
+		}
+		requests := fmt.Sprintf("%v", data.Requests)
+		if len(requests) > paddings[1] {
+			paddings[1] = len(requests)
+		}
+		jobProgress := fmt.Sprintf("%v", data.JobProgress)
+		if len(jobProgress) > paddings[2] {
+			paddings[2] = len(jobProgress)
+		}
+		eventProgress := fmt.Sprintf("%v", data.EventProgress)
+		if len(eventProgress) > paddings[3] {
+			paddings[3] = len(eventProgress)
+		}
+		lumiProgress := fmt.Sprintf("%v", data.LumiProgress)
+		if len(lumiProgress) > paddings[4] {
+			paddings[4] = len(lumiProgress)
+		}
+		failureRate := fmt.Sprintf("%v", data.FailureRate)
+		if len(failureRate) > paddings[5] {
+			paddings[5] = len(failureRate)
+		}
+		cooloff := fmt.Sprintf("%v", data.CoolOff)
+		if len(cooloff) > paddings[6] {
+			paddings[6] = len(cooloff)
+		}
+		values := []string{
+			campaign, requests, jobProgress, eventProgress, lumiProgress, failureRate, cooloff,
+		}
+		allValues = append(allValues, values)
+	}
+	return headers, allValues, paddings
+}
+
 // AgentStatsMap
 type AgentStatsMap map[string]AgentStats
 
@@ -101,6 +189,44 @@ func (wmap AgentStatsMap) HTMLTable() string {
 	}
 	t += "</table>"
 	return t
+}
+
+// CliTable implements WMStatsMap interface
+func (wmap AgentStatsMap) CliTable() ([]string, [][]string, []int) {
+	headers := []string{
+		"Agent", "Requests", "JobProgress", "Failure Rate", "CoolOff",
+	}
+	paddings := make([]int, len(headers))
+	for k, v := range headers {
+		paddings[k] = len(v)
+	}
+	var allValues [][]string
+	for agent, data := range wmap {
+		if len(agent) > paddings[0] {
+			paddings[0] = len(agent)
+		}
+		requests := fmt.Sprintf("%v", data.Requests)
+		if len(requests) > paddings[1] {
+			paddings[1] = len(requests)
+		}
+		jobProgress := fmt.Sprintf("%v", data.JobProgress)
+		if len(jobProgress) > paddings[2] {
+			paddings[2] = len(jobProgress)
+		}
+		failureRate := fmt.Sprintf("%v", data.FailureRate)
+		if len(failureRate) > paddings[3] {
+			paddings[3] = len(failureRate)
+		}
+		cooloff := fmt.Sprintf("%v", data.CoolOff)
+		if len(cooloff) > paddings[4] {
+			paddings[4] = len(cooloff)
+		}
+		values := []string{
+			agent, requests, jobProgress, failureRate, cooloff,
+		}
+		allValues = append(allValues, values)
+	}
+	return headers, allValues, paddings
 }
 
 // CMSSWStatsMap
@@ -130,6 +256,52 @@ func (wmap CMSSWStatsMap) HTMLTable() string {
 	}
 	t += "</table>"
 	return t
+}
+
+// CliTable implements WMStatsMap interface
+func (wmap CMSSWStatsMap) CliTable() ([]string, [][]string, []int) {
+	headers := []string{
+		"CMSSW", "Requests", "JobProgress", "EventProgress", "LumiProgress", "Failure Raute", "CoolOff",
+	}
+	paddings := make([]int, len(headers))
+	for k, v := range headers {
+		paddings[k] = len(v)
+	}
+	var allValues [][]string
+	for cmssw, data := range wmap {
+		if len(cmssw) > paddings[0] {
+			paddings[0] = len(cmssw)
+		}
+		requests := fmt.Sprintf("%v", data.Requests)
+		if len(requests) > paddings[1] {
+			paddings[1] = len(requests)
+		}
+		jobProgress := fmt.Sprintf("%v", data.JobProgress)
+		if len(jobProgress) > paddings[2] {
+			paddings[2] = len(jobProgress)
+		}
+		eventProgress := fmt.Sprintf("%v", data.EventProgress)
+		if len(eventProgress) > paddings[3] {
+			paddings[3] = len(eventProgress)
+		}
+		lumiProgress := fmt.Sprintf("%v", data.LumiProgress)
+		if len(lumiProgress) > paddings[4] {
+			paddings[4] = len(lumiProgress)
+		}
+		failureRate := fmt.Sprintf("%v", data.FailureRate)
+		if len(failureRate) > paddings[5] {
+			paddings[5] = len(failureRate)
+		}
+		cooloff := fmt.Sprintf("%v", data.CoolOff)
+		if len(cooloff) > paddings[6] {
+			paddings[6] = len(cooloff)
+		}
+		values := []string{
+			cmssw, requests, jobProgress, eventProgress, lumiProgress, failureRate, cooloff,
+		}
+		allValues = append(allValues, values)
+	}
+	return headers, allValues, paddings
 }
 
 // WorkflowMap provides list of workflows for a given key, e.g. campaign
@@ -184,7 +356,7 @@ type WMStatsInfo struct {
 }
 
 // wmstats provide aggregated statistics
-func wmstats(wmgr *WMStatsManager, verbose int) *WMStatsInfo {
+func wmstats(wmgr *WMStatsManager, filters WMStatsFilters, verbose int) *WMStatsInfo {
 	time0 := time.Now()
 	// update our cacheAgentStatsMawmgr.update()
 	var wmstats WMStatsResults

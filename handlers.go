@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -30,6 +31,25 @@ type ServerError struct {
 	Exception int       `json:"exception"` // for compatibility with Python server
 	Type      string    `json:"type"`      // for compatibility with Python server
 	Message   string    `json:"message"`   // for compatibility with Python server
+}
+
+type WMStatsFilters map[string]string
+
+// helper function to get wmstats filters out of HTTP request
+func wmstatsFilters(values string) WMStatsFilters {
+	filters := make(WMStatsFilters)
+	arr := strings.Split(values, ",")
+	for _, val := range arr {
+		pair := strings.Split(val, "=")
+		if len(pair) != 2 {
+			//             log.Printf("Unable to extract key=value pair from wmstats filters: '%s'\n", wmstatsFilters)
+			continue
+		}
+		key := pair[0]
+		value := pair[1]
+		filters[key] = value
+	}
+	return filters
 }
 
 // helper function to parse given template and return HTML page
@@ -60,11 +80,12 @@ var _wmstatsInfo *WMStatsInfo
 func MainHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	stats := query.Get("stats")
+	filters := wmstatsFilters(query.Get("filters"))
 
 	// get data
 	wMgr.update()
 	if _wmstatsInfo == nil || wMgr.TTL < time.Now().Unix() {
-		_wmstatsInfo = wmstats(wMgr, 0)
+		_wmstatsInfo = wmstats(wMgr, filters, 0)
 	}
 	var table string
 	if stats == "agent" {
@@ -85,7 +106,8 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl["ServerInfo"] = ServerInfo
 	tmpl["Table"] = template.HTML(table)
 	tmpl["Menu"] = template.HTML(tmplPage("menu.tmpl", tmpl))
-//     tmpl["Search"] = template.HTML(tmplPage("search.tmpl", tmpl))
+	//     tmpl["Search"] = template.HTML(tmplPage("search.tmpl", tmpl))
+	tmpl["Query"] = r.URL.Query()
 	tmpl["Filter"] = template.HTML(tmplPage("filters.tmpl", tmpl))
 	tmpl["Header"] = _header
 	tmpl["Footer"] = _footer
@@ -143,11 +165,12 @@ func WorkflowsHandler(w http.ResponseWriter, r *http.Request) {
 	site := query.Get("site")
 	cmssw := query.Get("cmssw")
 	agent := query.Get("agent")
+	filters := wmstatsFilters(query.Get("filters"))
 
 	// get data
 	wMgr.update()
 	if _wmstatsInfo == nil || wMgr.TTL < time.Now().Unix() {
-		_wmstatsInfo = wmstats(wMgr, 0)
+		_wmstatsInfo = wmstats(wMgr, filters, 0)
 	}
 	table := "Unkown key"
 	title := ""

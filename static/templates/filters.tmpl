@@ -1,22 +1,22 @@
 <!-- filters element -->
-<form method="post" action="">
+<form method="post" action="{{.Base}}?{{.Query}}">
     <div class="form-item">
         <div class="is-row">
             <div class="is-col is-80">
                 <input type="text" name="search" placeholder="value or pattern">
             </div>
             <div class="is-col is-20">
-                <select name="filter" class="button is-secondary">
+                <select name="filters" class="button is-secondary is-small">
                     <option value="" disabled="disabled">Filter</option>
                     <option value="campaign">Campaign</option>
-                    <option value="campaignworkflow">Workflow</option>
-                    <option value="campaigntype">Type</option>
-                    <option value="campaignstatus">Status</option>
-                    <option value="campaigninput-dataset">Input dataset</option>
-                    <option value="campaignoutput-dataset">Output dataset</option>
-                    <option value="campaignsite">Site</option>
-                    <option value="campaignteam">Team</option>
-                    <option value="campaignagent">Agent</option>
+                    <option value="workflow">Workflow</option>
+                    <option value="type">Type</option>
+                    <option value="status">Status</option>
+                    <option value="input-dataset">Input dataset</option>
+                    <option value="output-dataset">Output dataset</option>
+                    <option value="site">Site</option>
+                    <option value="team">Team</option>
+                    <option value="agent">Agent</option>
                 </select>
             </div>
         </div>
