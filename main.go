@@ -32,13 +32,15 @@ func main() {
 	flag.StringVar(&filters, "filters", "", "comma separated wmstats filters")
 	var display string
 	flag.StringVar(&display, "display", "campaign", "display given attribute")
+	var verbose int
+	flag.IntVar(&verbose, "verbose", 0, "verbose level")
 	flag.Parse()
 	if version {
 		fmt.Println("wmstats version:", info())
 		return
 	}
 	if wmstatsFile != "" {
-		cli(wmstatsFile, wmstatsFilters(filters), display)
+		cli(wmstatsFile, wmstatsFilters(filters), display, verbose)
 	} else {
 		Server(config)
 	}
