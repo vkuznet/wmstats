@@ -64,7 +64,7 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 
 	// get data
 	wMgr.update()
-	if _wmstatsInfo == nil || wMgr.TTL < time.Now().Unix() {
+	if _wmstatsInfo == nil || wMgr.TTL < time.Now().Unix() || len(filters) > 0 {
 		_wmstatsInfo = wmstats(wMgr, filters, 0)
 	}
 	var table string
@@ -87,8 +87,9 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl["Table"] = template.HTML(table)
 	tmpl["Menu"] = template.HTML(tmplPage("menu.tmpl", tmpl))
 	//     tmpl["Search"] = template.HTML(tmplPage("search.tmpl", tmpl))
-	tmpl["Query"] = r.URL.Query()
+	tmpl["Query"] = query.Get("filters")
 	tmpl["Filter"] = template.HTML(tmplPage("filters.tmpl", tmpl))
+	tmpl["AppliedFilters"] = template.HTML(filtersToHTML(filters))
 	tmpl["Header"] = _header
 	tmpl["Footer"] = _footer
 
@@ -149,9 +150,10 @@ func WorkflowsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// get data
 	wMgr.update()
-	if _wmstatsInfo == nil || wMgr.TTL < time.Now().Unix() {
+	if _wmstatsInfo == nil || wMgr.TTL < time.Now().Unix() || len(filters) > 0 {
 		_wmstatsInfo = wmstats(wMgr, filters, 0)
 	}
+
 	table := "Unkown key"
 	title := ""
 	if campaign != "" {
