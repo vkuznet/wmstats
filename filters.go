@@ -5,7 +5,10 @@ package main
 // Copyright (c) 2022 - Valentin Kuznetsov <vkuznet@gmail.com>
 //
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type WMStatsFilters map[string]string
 
@@ -24,4 +27,16 @@ func wmstatsFilters(values string) WMStatsFilters {
 		filters[key] = value
 	}
 	return filters
+}
+
+// helper function to convert list of filters to HTML format
+func filtersToHTML(filters WMStatsFilters) string {
+	var s string
+	for k, v := range filters {
+		// TODO: make close icon to discard the filter
+		// so the action should turn off the span
+		f := fmt.Sprintf("<span class=\"alert is-focus\">%s=%s</span>", k, v)
+		s += fmt.Sprintf("%s<br/>", f)
+	}
+	return s
 }
