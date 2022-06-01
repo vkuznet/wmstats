@@ -11,10 +11,10 @@ import (
 )
 
 // cli provides CLI interface to wmstats
-func cli(wmstatsFile string, filters WMStatsFilters, stats string) {
+func cli(wmstatsFile string, filters WMStatsFilters, stats string, verbose int) {
 	wmgr := NewWMStatsManager(wmstatsFile)
 	wmgr.update()
-	_wmstatsInfo := wmstats(wmgr, filters, 1)
+	_wmstatsInfo := wmstats(wmgr, filters, verbose)
 	var headers []string
 	var values [][]string
 	var paddings []int
@@ -33,8 +33,8 @@ func cli(wmstatsFile string, filters WMStatsFilters, stats string) {
 	// print headers
 	var rowValues []string
 	for k, v := range headers {
-		if len(v) < paddings[k] {
-			vals := make([]string, paddings[k]-len(v))
+		if len(v) <= paddings[k] {
+			vals := make([]string, paddings[k]+1-len(v))
 			rowValues = append(rowValues, v+strings.Join(vals, " "))
 		} else {
 			rowValues = append(rowValues, v)
@@ -45,8 +45,8 @@ func cli(wmstatsFile string, filters WMStatsFilters, stats string) {
 	for _, vals := range values {
 		var rowValues []string
 		for k, v := range vals {
-			if len(v) < paddings[k] {
-				vals := make([]string, paddings[k]-len(v))
+			if len(v) <= paddings[k] {
+				vals := make([]string, paddings[k]+1-len(v))
 				rowValues = append(rowValues, v+strings.Join(vals, " "))
 			} else {
 				rowValues = append(rowValues, v)
