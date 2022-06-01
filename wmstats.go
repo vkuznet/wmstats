@@ -257,6 +257,13 @@ func wmstats(wmgr *WMStatsManager, filters WMStatsFilters, verbose int) *WMStats
 			fmt.Println("agent:", agent)
 			fmt.Printf("%+v\n", data)
 		}
+		astats := AgentStats{
+			FailureRate: float64(data.Status.Failure.Sum()),
+			JobProgress: 0, // TODO
+			Requests:    data.Requests,
+			CoolOff:     data.Status.CoolOff.Sum(),
+		}
+		amap[agent] = astats
 	}
 
 	if verbose > 1 {
@@ -267,6 +274,15 @@ func wmstats(wmgr *WMStatsManager, filters WMStatsFilters, verbose int) *WMStats
 			fmt.Println("cmssw:", cmssw)
 			fmt.Printf("%+v\n", data)
 		}
+		rstats := CMSSWStats{
+			JobProgress:   0, // TODO
+			EventProgress: 0, // TODO
+			LumiProgress:  0, // TODO
+			FailureRate:   float64(data.Status.Failure.Sum()),
+			Requests:      data.Requests,
+			CoolOff:       data.Status.CoolOff.Sum(),
+		}
+		rmap[cmssw] = rstats
 	}
 	fmt.Println("### Total number of workflows", len(wmap), "in", time.Since(time0))
 	stats := WMStatsInfo{
