@@ -76,8 +76,8 @@ jobs:
       run: |
         curl -ksLO https://raw.githubusercontent.com/dmwm/CMSKubernetes/master/docker/wmstats/Dockerfile
         sed -i -e "s,ENV TAG=.*,ENV TAG=${{steps.get-ref.outputs.tag}},g" Dockerfile
-        docker build . --tag docker.pkg.github.com/dmwm/wmstats/wmstats
-        docker tag docker.pkg.github.com/dmwm/wmstats/wmstats registry.cern.ch/cmsweb/wmstats
+        docker build . --tag docker.pkg.github.com/vkuznet/wmstats/wmstats
+        docker tag docker.pkg.github.com/vkuznet/wmstats/wmstats registry.cern.ch/cmsweb/wmstats
 
     - name: Login to registry.cern.ch
       uses: docker/login-action@v1.6.0
