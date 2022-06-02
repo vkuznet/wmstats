@@ -15,7 +15,6 @@ jobs:
       deployments: write
       discussions: write
       issues: write
-      id-token: read
       metadata: read
       packages: write
       pages: write
