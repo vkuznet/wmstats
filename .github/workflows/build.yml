@@ -37,9 +37,6 @@ jobs:
         echo "ARM64 build"
         make build_arm64
 
-        echo "Windows build"
-        make build_windows
-
         echo "Tar all builds"
         tar cfz wmstats.tar.gz wmstats_*
 
