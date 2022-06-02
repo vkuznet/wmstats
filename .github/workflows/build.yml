@@ -8,6 +8,8 @@ on:
 jobs:
 
   build:
+    permissions:
+      issues: write
     name: Build
     runs-on: ubuntu-latest
     steps:
