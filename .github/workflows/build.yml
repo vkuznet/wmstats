@@ -23,22 +23,22 @@ jobs:
     - name: Build
       run: |
         echo "AMD64 build"
-        make build_amd64;   mv wmstats wmstats_amd64
+        make build_amd64
 
         echo "Darwin AMD64 build"
-        make build_osx;  mv wmstats wmstats_osx_amd64
+        make build_osx
 
         echo "Darwin ARM64 build"
-        make build_osx_arm64;  mv wmstats wmstats_osx_aarch64
+        make build_osx_arm64
 
         echo "Power8 build"
-        make build_power8;  mv wmstats wmstats_ppc64le
+        make build_power8
 
         echo "ARM64 build"
-        make build_arm64;   mv wmstats wmstats_aarch64
+        make build_arm64
 
         echo "Windows build"
-        make build_windows; mv wmstats wmstats_windows
+        make build_windows
 
         echo "Tar all builds"
         tar cfz wmstats.tar.gz wmstats_*
