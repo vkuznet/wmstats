@@ -56,6 +56,12 @@ func MetricsHandler(w http.ResponseWriter, r *http.Request) {
 // global pointer to wmstats info
 var _wmstatsInfo *WMStatsInfo
 
+// ErrorHandler provides access to error page
+func ErrorHandler(w http.ResponseWriter, r *http.Request, msg string) {
+	data := []byte(msg)
+	w.Write(data)
+}
+
 // MainHandler provides access to main page of server
 func MainHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
@@ -63,10 +69,15 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 	filters := wmstatsFilters(query.Get("filters"))
 
 	// get data
-	wMgr.update()
 	if _wmstatsInfo == nil || wMgr.TTL < time.Now().Unix() || len(filters) > 0 {
 		_wmstatsInfo = wmstats(wMgr, filters, 0)
 	}
+	if _wmstatsInfo == nil {
+		msg := "WMStats data is not yet ready, please retry"
+		ErrorHandler(w, r, msg)
+		return
+	}
+
 	var table string
 	if stats == "agent" {
 		table = _wmstatsInfo.AgentStatsMap.HTMLTable()
@@ -149,9 +160,13 @@ func WorkflowsHandler(w http.ResponseWriter, r *http.Request) {
 	filters := wmstatsFilters(query.Get("filters"))
 
 	// get data
-	wMgr.update()
 	if _wmstatsInfo == nil || wMgr.TTL < time.Now().Unix() || len(filters) > 0 {
 		_wmstatsInfo = wmstats(wMgr, filters, 0)
+	}
+	if _wmstatsInfo == nil {
+		msg := "WMStats data is not yet ready, please retry"
+		ErrorHandler(w, r, msg)
+		return
 	}
 
 	table := "Unkown key"

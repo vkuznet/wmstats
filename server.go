@@ -84,6 +84,21 @@ func Handlers() *mux.Router {
 	return router
 }
 
+// helper function to run as go-routine to update WMStats cache
+func updateWMStatsCache(wmgr *WMStatsManager, ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			time.Sleep(time.Duration(5) * time.Second)
+			if wmgr != nil {
+				wmgr.update()
+			}
+		}
+	}
+}
+
 // Server represents main web server for service
 //gocyclo:ignore
 func Server(configFile string) {
@@ -152,6 +167,9 @@ func Server(configFile string) {
 
 	// setup WMStatsManager to handle our cache
 	wMgr = NewWMStatsManager(Config.AccessURI)
+	ctx0, cancel0 := context.WithCancel(context.Background())
+	defer cancel0()
+	go updateWMStatsCache(wMgr, ctx0)
 
 	// define our HTTP server
 	http.Handle("/", Handlers())

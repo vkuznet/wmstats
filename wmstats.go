@@ -33,6 +33,9 @@ func wmstats(wmgr *WMStatsManager, filters WMStatsFilters, verbose int) *WMStats
 	time0 := time.Now()
 	// update our cacheAgentStatsMawmgr.update()
 	var wmstats WMStatsResults
+	if len(wmgr.Data) == 0 {
+		return nil
+	}
 	err := json.Unmarshal(wmgr.Data, &wmstats)
 	if err != nil {
 		log.Fatal(err)

@@ -37,6 +37,7 @@ func (w *WMStatsManager) update() {
 		if err == nil {
 			w.Data = data
 		}
+		log.Println("update WMStats cache with", w.URI, err)
 		w.TTL = time.Now().Unix() + w.RenewInterval
 	}
 }
