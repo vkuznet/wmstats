@@ -73,5 +73,8 @@ func ParseConfig(configFile string) error {
 	if Config.Templates == "" {
 		Config.Templates = fmt.Sprintf("%s/templates", Config.StaticDir)
 	}
+	if Config.MetricsPrefix == "" {
+		Config.MetricsPrefix = "wmstats"
+	}
 	return nil
 }
